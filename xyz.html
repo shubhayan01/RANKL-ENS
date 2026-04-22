@@ -174,9 +174,44 @@
   .pill-green { background: #E8F5E9; color: #2E7D32; }
 
   .kw-counter { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; margin-top: 3px; }
+
+  /* ── auth gate ── completely invisible in source inspection unless you know it's there */
+  #_ag{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+  #_ag._gone{display:none;}
+  ._ab{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:40px 36px;width:100%;max-width:380px;}
+  ._at{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:4px;text-align:center;}
+  ._as{font-size:12px;color:var(--text-3);text-align:center;margin-bottom:28px;font-family:'DM Mono',monospace;}
+  ._af{display:flex;flex-direction:column;gap:14px;}
+  ._ai{background:var(--bg2);border:1.5px solid var(--border);border-radius:7px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);outline:none;width:100%;transition:border-color .15s,box-shadow .15s;}
+  ._ai:focus{border-color:var(--accent-mid);box-shadow:0 0 0 3px rgba(44,95,46,0.12);}
+  ._al{font-size:11px;font-weight:500;color:var(--text-2);margin-bottom:2px;}
+  ._abt{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;width:100%;transition:background .15s;}
+  ._abt:hover{background:#1F4420;}
+  ._ae{font-size:12px;color:var(--warn);text-align:center;min-height:18px;font-family:'DM Mono',monospace;}
+
+  /* avg rank stat card */
+  .avg-stat-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .avg-stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);}
+  .avg-stat-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);}
+  .avg-stat-lbl{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;line-height:1.4;}
 </style>
 </head>
 <body>
+
+<!-- ░░ do not remove ░░ -->
+<div id="_ag">
+  <div class="_ab">
+    <div class="_at">Rank<span style="color:var(--accent)">Lens</span></div>
+    <div class="_as">internal access only</div>
+    <div class="_af">
+      <div><div class="_al">Username</div><input class="_ai" id="_au" type="text" autocomplete="off" placeholder="username"></div>
+      <div><div class="_al">Password</div><input class="_ai" id="_ap" type="password" autocomplete="off" placeholder="••••••••"></div>
+      <div class="_ae" id="_aer"></div>
+      <button class="_abt" onclick="_ck()">Continue</button>
+    </div>
+  </div>
+</div>
+<!-- ░░ ░░ ░░ -->
 
 <header>
   <div class="logo-mark">
@@ -392,6 +427,27 @@
       </button>
     </div>
 
+    <div class="avg-stat-row" id="avgStatRow" style="display:none">
+      <div class="avg-stat">
+        <div>
+          <div class="avg-stat-val" id="avgRankVal">—</div>
+          <div class="avg-stat-lbl">Avg. Rank<br>(ranked only)</div>
+        </div>
+      </div>
+      <div class="avg-stat">
+        <div>
+          <div class="avg-stat-val" id="medRankVal">—</div>
+          <div class="avg-stat-lbl">Median Rank<br>(ranked only)</div>
+        </div>
+      </div>
+      <div class="avg-stat">
+        <div>
+          <div class="avg-stat-val" id="top10Val">—</div>
+          <div class="avg-stat-lbl">Top 10<br>keywords</div>
+        </div>
+      </div>
+    </div>
+
     <div class="filter-bar">
       <input type="text" id="filterInput" placeholder="Filter keywords…" oninput="filterResults()">
       <select id="filterRank" onchange="filterResults()">
@@ -448,6 +504,25 @@
 </div>
 
 <script>
+  // ── auth ──────────────────────────────────────────────────────────────────
+  (function(){if(sessionStorage.getItem('\x5f\x72l\x61\x75\x74\x68')==='1'){document.getElementById('_ag').classList.add('_gone');}})();
+  function _ck(){
+    var u=document.getElementById('_au').value.trim();
+    var p=document.getElementById('_ap').value;
+    var e=document.getElementById('_aer');
+    if(u===atob('c2h1YmhheWFuQGlhbW5lbw==')&&p===atob('SnVzdFdvcmRzMjAyNg==')){
+      sessionStorage.setItem('\x5f\x72l\x61\x75\x74\x68','1');
+      document.getElementById('_ag').classList.add('_gone');
+    } else {
+      e.textContent='Invalid credentials.';
+      document.getElementById('_au').style.borderColor='var(--warn)';
+      document.getElementById('_ap').style.borderColor='var(--warn)';
+      setTimeout(function(){e.textContent='';document.getElementById('_au').style.borderColor='';document.getElementById('_ap').style.borderColor='';},2200);
+    }
+  }
+  document.addEventListener('keydown',function(ev){if(ev.key==='Enter'&&!document.getElementById('_ag').classList.contains('_gone'))_ck();});
+  // ─────────────────────────────────────────────────────────────────────────
+
   let selectedSE = 'google';
   let selectedDevice = 'desktop';
   let allResults = [];
@@ -689,6 +764,24 @@
       `<strong>${results.length.toLocaleString()}</strong> keywords checked for <strong>${domain}</strong> — `
       + `<span class="pill pill-green">${ranked.toLocaleString()} ranked</span>`
       + ` &nbsp;<span style="color:var(--text-3)">${notFound.toLocaleString()} not found</span>`;
+
+    // ── avg rank stats ────────────────────────────────────────────────────
+    const rankedRanks = results.filter(r => r.rank !== null).map(r => r.rank).sort((a,b)=>a-b);
+    const statRow = document.getElementById('avgStatRow');
+    if (rankedRanks.length > 0) {
+      const avg = (rankedRanks.reduce((s,v)=>s+v,0) / rankedRanks.length).toFixed(1);
+      const mid = Math.floor(rankedRanks.length/2);
+      const median = rankedRanks.length % 2 !== 0 ? rankedRanks[mid] : ((rankedRanks[mid-1]+rankedRanks[mid])/2).toFixed(1);
+      const top10count = rankedRanks.filter(r=>r<=10).length;
+      document.getElementById('avgRankVal').textContent = avg;
+      document.getElementById('medRankVal').textContent = median;
+      document.getElementById('top10Val').textContent = top10count;
+      statRow.style.display = 'flex';
+    } else {
+      statRow.style.display = 'none';
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     buildTable(results);
     hideMessages();
     if (!partial && ranked === 0) showInfo('No rankings found. Make sure the domain is correct and is ranking in the top 100 results.');
