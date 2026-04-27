@@ -192,6 +192,10 @@
   .avg-stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);}
   .avg-stat-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);}
   .avg-stat-lbl{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;line-height:1.4;}
+
+  /* rank mode toggle */
+  .rank-mode-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:12px; color:var(--text-2); font-family:'DM Mono',monospace; }
+  .rank-mode-row .se-btn { font-size:11px; padding:5px 11px; }
 </style>
 </head>
 <body>
@@ -380,6 +384,15 @@
           <button class="se-btn" data-dev="mobile" onclick="selectDevice(this)">Mobile</button>
         </div>
       </div>
+
+      <div class="field full">
+        <label>Rank Display Mode</label>
+        <div class="se-group" id="rankModeGroup">
+          <button class="se-btn active" data-mode="organic" onclick="selectRankMode(this)" title="Position among organic (non-ad, non-featured) results — matches what most SEO tools show">Organic position</button>
+          <button class="se-btn" data-mode="absolute" onclick="selectRankMode(this)" title="Raw SERP position including ads, featured snippets, PAA boxes etc.">Absolute SERP position</button>
+        </div>
+        <div class="field-hint" id="rankModeHint">Organic position = rank among blue-link results only (recommended for SEO tracking)</div>
+      </div>
     </div>
 
     <div class="actions-row">
@@ -470,7 +483,7 @@
 </main>
 
 <div id="serpModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(26,23,20,0.55);backdrop-filter:blur(4px);padding:24px 16px;overflow-y:auto;">
-  <div style="max-width:700px;margin:0 auto;background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow-lg);overflow:hidden;">
+  <div style="max-width:740px;margin:0 auto;background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow-lg);overflow:hidden;">
     <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
       <div>
         <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)" id="serpModalTitle">Full SERP</div>
@@ -482,7 +495,8 @@
       <table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--surface);">
         <thead style="background:var(--bg2);border-bottom:1px solid var(--border);">
           <tr>
-            <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;white-space:nowrap;">Pos</th>
+            <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;white-space:nowrap;">Abs</th>
+            <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;white-space:nowrap;">Org#</th>
             <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;">Type</th>
             <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;">Domain</th>
             <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;">URL</th>
@@ -516,7 +530,17 @@
 
   let selectedSE = 'google';
   let selectedDevice = 'desktop';
+  let selectedRankMode = 'organic'; // 'organic' | 'absolute'
   let allResults = [];
+
+  // ── ORGANIC RESULT TYPES (DataForSEO) ────────────────────────────────────
+  // These are the item types that count as real organic results.
+  // Everything else (featured_snippet, people_also_ask, knowledge_graph,
+  // local_pack, video, images, shopping etc.) is excluded from organic count.
+  const ORGANIC_TYPES = new Set([
+    'organic',
+    'organic_result',  // alternate casing seen in some responses
+  ]);
 
   function updateKwCount() {
     const n = getKeywords().length;
@@ -562,6 +586,15 @@
     document.querySelectorAll('#deviceGroup .se-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active'); selectedDevice = btn.dataset.dev;
   }
+  function selectRankMode(btn) {
+    document.querySelectorAll('#rankModeGroup .se-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRankMode = btn.dataset.mode;
+    document.getElementById('rankModeHint').textContent = selectedRankMode === 'organic'
+      ? 'Organic position = rank among blue-link results only (recommended for SEO tracking)'
+      : 'Absolute SERP position = includes ads, featured snippets, PAA boxes etc.';
+  }
+
   function togglePw() {
     const el = document.getElementById('apiPassword');
     const icon = document.getElementById('eyeIcon');
@@ -595,78 +628,111 @@
     document.getElementById('progressLabel').textContent = `Checking ${done} / ${total} keywords…`;
   }
 
-  // ── FIX: Robust domain extraction ────────────────────────────────────────
+  // ── Domain helpers ────────────────────────────────────────────────────────
   function extractHost(urlStr) {
     if (!urlStr) return '';
     try {
       const u = new URL(urlStr.startsWith('http') ? urlStr : 'https://' + urlStr);
       return u.hostname.replace(/^www\./i, '').toLowerCase();
     } catch (_) {
-      // fallback: strip protocol and www, take up to first slash
       return urlStr.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
     }
   }
 
-  // ── FIX: Strict domain matching — no substring tricks ────────────────────
-  // Returns true only when the SERP item is genuinely on the target domain.
-  // Allows subdomains of target (blog.example.com matches example.com)
-  // but NOT reverse (example.com must NOT match artexample.com).
   function domainMatches(itemHost, targetHost) {
     if (!itemHost || !targetHost) return false;
-    // exact match
     if (itemHost === targetHost) return true;
-    // item is a subdomain of target: "blog.example.com" ends with ".example.com"
     if (itemHost.endsWith('.' + targetHost)) return true;
-    // target is a subdomain of item (e.g. user searched "blog.example.com"):
     if (targetHost.endsWith('.' + itemHost)) return true;
     return false;
   }
 
-  // ── FIX: Deep SERP traversal with correct rank propagation ───────────────
-  // The parent item's rank_absolute is the true SERP position.
-  // Nested items (e.g. sitelinks, image pack entries) share the parent's
-  // rank_absolute — they do NOT have an independent SERP position.
-  function findDomainInItems(items, targetHost) {
-    // We do a breadth-first walk so the shallowest (most authoritative) match wins.
-    // Each entry in the queue is { item, parentRank } where parentRank is the
-    // rank_absolute of the top-level SERP item that contains this node.
-    const queue = items.map(item => ({ item, parentRank: item.rank_absolute ?? null }));
+  // ── CORE FIX: Parse SERP items into flat organic list + domain search ─────
+  //
+  // Strategy:
+  //   1. Walk ALL items recursively, collecting every URL/domain we can find.
+  //   2. For organic mode: only consider items with type === 'organic'.
+  //      Assign organic position = the item's rank among organic items only.
+  //   3. For absolute mode: consider all items, use rank_absolute.
+  //   4. Nested items (sitelinks etc.) inherit their parent's rank.
+  //
+  // This fixes:
+  //   - Featured snippets / PAA / knowledge panels inflating rank numbers
+  //   - Missing results because domain only appears in nested sitelinks
+  //   - Wrong rank because rank_absolute was used for organic position
+  // ─────────────────────────────────────────────────────────────────────────
 
-    while (queue.length > 0) {
-      const { item, parentRank } = queue.shift();
+  function parseSerp(items, targetHost, mode) {
+    // Step 1: flatten all items with their organic_position and absolute position
+    // organic_position is computed by counting only type==='organic' items in order.
+    const flat = []; // { type, rank_absolute, organic_position, url, domain, fromParent }
 
-      // Determine the rank to report: use parentRank (the top-level SERP position)
-      // unless we're already at the top level and the item itself has a rank.
-      const rank = parentRank;
+    let organicCounter = 0;
 
-      // Try to match this item's domain/url against target
-      const urlToCheck = item.url || '';
-      const domainToCheck = item.domain || '';
+    // Walk items in order (rank_absolute order)
+    const sorted = [...items].sort((a, b) => (a.rank_absolute ?? 999) - (b.rank_absolute ?? 999));
 
-      let itemHost = '';
-      if (urlToCheck) {
-        itemHost = extractHost(urlToCheck);
-      } else if (domainToCheck) {
-        itemHost = domainToCheck.replace(/^www\./i, '').toLowerCase();
-      }
+    for (const item of sorted) {
+      const isOrganic = item.type === 'organic';
+      if (isOrganic) organicCounter++;
 
-      if (itemHost && domainMatches(itemHost, targetHost)) {
-        return { rank, url: urlToCheck || domainToCheck };
-      }
+      const orgPos = isOrganic ? organicCounter : null;
 
-      // Queue children — carry down the top-level rank_absolute
-      if (Array.isArray(item.items) && item.items.length > 0) {
+      // Add the item itself
+      flat.push({
+        type: item.type,
+        rank_absolute: item.rank_absolute,
+        organic_position: orgPos,
+        url: item.url || '',
+        domain: item.domain || '',
+      });
+
+      // Add nested items (sitelinks, etc.) — they inherit parent's rank / organic_position
+      if (Array.isArray(item.items)) {
         for (const child of item.items) {
-          queue.push({ item: child, parentRank: rank });
+          flat.push({
+            type: item.type + '_nested',
+            rank_absolute: item.rank_absolute,
+            organic_position: orgPos,
+            url: child.url || '',
+            domain: child.domain || '',
+          });
         }
       }
-      // Some result types nest under `links` (sitelinks)
-      if (Array.isArray(item.links) && item.links.length > 0) {
+      if (Array.isArray(item.links)) {
         for (const link of item.links) {
-          queue.push({ item: link, parentRank: rank });
+          flat.push({
+            type: item.type + '_link',
+            rank_absolute: item.rank_absolute,
+            organic_position: orgPos,
+            url: link.url || '',
+            domain: link.domain || '',
+          });
         }
       }
     }
+
+    // Step 2: find the best match for our target domain
+    // In organic mode: only consider entries that have an organic_position
+    // In absolute mode: consider everything
+
+    const candidates = mode === 'organic'
+      ? flat.filter(f => f.organic_position !== null)
+      : flat;
+
+    for (const entry of candidates) {
+      const urlHost = extractHost(entry.url);
+      const domHost = (entry.domain || '').replace(/^www\./i, '').toLowerCase();
+      const matched = (urlHost && domainMatches(urlHost, targetHost))
+                   || (domHost && domainMatches(domHost, targetHost));
+      if (matched) {
+        return {
+          rank: mode === 'organic' ? entry.organic_position : entry.rank_absolute,
+          url: entry.url || entry.domain,
+        };
+      }
+    }
+
     return null;
   }
 
@@ -677,7 +743,8 @@
       language_code: languageCode,
       se_domain: seDomain,
       device: selectedDevice,
-      depth: 100
+      depth: 100,
+      // include all item types so we get full organic list
     }];
 
     let resp, data;
@@ -689,34 +756,49 @@
       });
       data = await resp.json();
     } catch (netErr) {
-      return { keyword: kw, rank: null, url: null, error: 'Network error: ' + netErr.message, serpItems: [] };
+      return { keyword: kw, rank: null, url: null, error: 'Network error: ' + netErr.message, serpItems: [], organicCount: 0 };
     }
 
     if (data.status_code && data.status_code !== 20000) {
-      return { keyword: kw, rank: null, url: null, error: `API ${data.status_code}: ${data.status_message}`, serpItems: [] };
+      return { keyword: kw, rank: null, url: null, error: `API ${data.status_code}: ${data.status_message}`, serpItems: [], organicCount: 0 };
     }
 
     const task = (data.tasks || [])[0];
     if (!task || task.status_code !== 20000) {
-      return { keyword: kw, rank: null, url: null, error: task?.status_message || 'Task error', serpItems: [] };
+      return { keyword: kw, rank: null, url: null, error: task?.status_message || 'Task error', serpItems: [], organicCount: 0 };
     }
 
     const items = task.result?.[0]?.items || [];
 
-    // ── FIX: use the new deep traversal with correct rank propagation ──────
-    const found = findDomainInItems(items, targetHost);
+    // Count organic items for display
+    const organicCount = items.filter(i => i.type === 'organic').length;
+
+    // Find using selected mode
+    const found = parseSerp(items, targetHost, selectedRankMode);
+
+    // Build SERP display data with both absolute + organic positions
+    let orgIdx = 0;
+    const serpItems = items
+      .sort((a, b) => (a.rank_absolute ?? 999) - (b.rank_absolute ?? 999))
+      .map(it => {
+        if (it.type === 'organic') orgIdx++;
+        return {
+          type: it.type,
+          rank_absolute: it.rank_absolute,
+          organic_position: it.type === 'organic' ? orgIdx : null,
+          domain: it.domain,
+          url: it.url,
+        };
+      });
 
     return {
       keyword: task.data?.keyword || kw,
       rank: found ? found.rank : null,
       url:  found ? found.url  : null,
+      rankMode: selectedRankMode,
       error: null,
-      serpItems: items.map(it => ({
-        type: it.type,
-        rank_absolute: it.rank_absolute,
-        domain: it.domain,
-        url: it.url
-      }))
+      serpItems,
+      organicCount,
     };
   }
 
@@ -740,7 +822,6 @@
     const seDomain     = parts[2];
     const locationCodeInt = parseInt(locationCode);
 
-    // ── FIX: build the clean target host once, correctly ─────────────────
     const targetHost = domain
       .replace(/^https?:\/\//i, '')
       .replace(/^www\./i, '')
@@ -806,10 +887,12 @@
     if (!partial) document.getElementById('progressWrap').classList.remove('visible');
     const ranked   = results.filter(r => r.rank !== null).length;
     const notFound = results.filter(r => r.rank === null).length;
+    const modeLabel = selectedRankMode === 'organic' ? 'organic pos.' : 'abs. pos.';
     document.getElementById('resultsCount').innerHTML =
       `<strong>${results.length.toLocaleString()}</strong> keywords checked for <strong>${domain}</strong> — `
       + `<span class="pill pill-green">${ranked.toLocaleString()} ranked</span>`
-      + ` &nbsp;<span style="color:var(--text-3)">${notFound.toLocaleString()} not found</span>`;
+      + ` &nbsp;<span style="color:var(--text-3)">${notFound.toLocaleString()} not found</span>`
+      + ` &nbsp;<span style="color:var(--text-3);font-family:'DM Mono',monospace;font-size:11px;">(${modeLabel})</span>`;
 
     const rankedRanks = results.filter(r => r.rank !== null).map(r => r.rank).sort((a,b)=>a-b);
     const statRow = document.getElementById('avgStatRow');
@@ -828,7 +911,7 @@
 
     buildTable(results);
     hideMessages();
-    if (!partial && ranked === 0) showInfo('No rankings found. Make sure the domain is correct and is ranking in the top 100 results.');
+    if (!partial && ranked === 0) showInfo('No rankings found. Make sure the domain is correct and is ranking in the top 100 results. Try switching to "Absolute SERP position" mode to debug.');
   }
 
   function buildTable(results) {
@@ -871,7 +954,8 @@
   function downloadCSV() {
     if (!allResults.length) return;
     const domain = document.getElementById('targetDomain').value.trim();
-    const rows = [['Keyword','Rank','Ranking URL','Domain']];
+    const modeLabel = selectedRankMode === 'organic' ? 'Organic Position' : 'Absolute Position';
+    const rows = [['Keyword', modeLabel, 'Ranking URL', 'Domain']];
     allResults.forEach(r => {
       rows.push([
         `"${(r.keyword||'').replace(/"/g,'""')}"`,
@@ -905,18 +989,25 @@
     const r = allResults[idx];
     if (!r || !r.serpItems) return;
     document.getElementById('serpModalTitle').textContent = `SERP: "${r.keyword}"`;
-    document.getElementById('serpModalMeta').textContent = `${r.serpItems.length} items returned · target: ${document.getElementById('targetDomain').value.trim()}`;
+    const orgTotal = r.serpItems.filter(i => i.type === 'organic').length;
+    document.getElementById('serpModalMeta').textContent =
+      `${r.serpItems.length} total items · ${orgTotal} organic · target: ${document.getElementById('targetDomain').value.trim()} · mode: ${r.rankMode || selectedRankMode}`;
+
     const target = document.getElementById('targetDomain').value.trim()
       .replace(/^https?:\/\//i,'').replace(/^www\./i,'').split('/')[0].toLowerCase();
+
     const tbody = document.getElementById('serpModalBody');
     tbody.innerHTML = r.serpItems.map(it => {
       const itemHost = extractHost(it.url || '') || (it.domain || '').replace(/^www\./i,'').toLowerCase();
       const isTarget = domainMatches(itemHost, target);
+      const isOrganic = it.type === 'organic';
       const bg = isTarget ? 'background:#E8F5E9;' : '';
       const domStyle = isTarget ? 'color:#2E7D32;font-weight:600;' : 'color:var(--text-2);';
+      const typeStyle = isOrganic ? 'color:var(--accent);font-weight:500;' : 'color:var(--text-3);';
       return `<tr style="border-bottom:1px solid var(--border);${bg}">
-        <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-3);width:40px;">${it.rank_absolute ?? '—'}</td>
-        <td style="padding:8px 14px;font-size:11px;color:var(--text-3);white-space:nowrap;">${it.type || '—'}</td>
+        <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-3);width:36px;">${it.rank_absolute ?? '—'}</td>
+        <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);width:36px;">${it.organic_position ?? '—'}</td>
+        <td style="padding:8px 14px;font-size:11px;white-space:nowrap;${typeStyle}">${it.type || '—'}</td>
         <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;${domStyle}">${escHtml(it.domain||'—')}</td>
         <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent-mid);max-width:280px;word-break:break-all;">${it.url ? `<a href="${escHtml(it.url)}" target="_blank" style="color:var(--accent-mid);text-decoration:none;">${truncate(it.url,60)}</a>` : '—'}</td>
       </tr>`;
