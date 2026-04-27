@@ -175,7 +175,6 @@
 
   .kw-counter { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; margin-top: 3px; }
 
-  /* ── auth gate ── completely invisible in source inspection unless you know it's there */
   #_ag{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
   #_ag._gone{display:none;}
   ._ab{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:40px 36px;width:100%;max-width:380px;}
@@ -189,7 +188,6 @@
   ._abt:hover{background:#1F4420;}
   ._ae{font-size:12px;color:var(--warn);text-align:center;min-height:18px;font-family:'DM Mono',monospace;}
 
-  /* avg rank stat card */
   .avg-stat-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
   .avg-stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);}
   .avg-stat-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);}
@@ -198,7 +196,6 @@
 </head>
 <body>
 
-<!-- ░░ do not remove ░░ -->
 <div id="_ag">
   <div class="_ab">
     <div class="_at">Rank<span style="color:var(--accent)">Lens</span></div>
@@ -211,7 +208,6 @@
     </div>
   </div>
 </div>
-<!-- ░░ ░░ ░░ -->
 
 <header>
   <div class="logo-mark">
@@ -233,7 +229,6 @@
     Cost-optimised: no search volume enrichment · same endpoint, same accuracy · <strong>~40% cheaper per keyword</strong> · 1,000 keywords ≈ $0.60
   </div>
 
-  <!-- Step 1 -->
   <div class="section-label">Step 1 — API Credentials</div>
   <div class="card creds-card">
     <div class="card-title">DataForSEO API Keys</div>
@@ -255,7 +250,6 @@
     </div>
   </div>
 
-  <!-- Step 2 -->
   <div class="section-label">Step 2 — Domain &amp; Keywords</div>
   <div class="card">
     <div class="card-title">Search Configuration</div>
@@ -399,7 +393,6 @@
     </div>
   </div>
 
-  <!-- Status -->
   <div class="status-banner error" id="errorBanner">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span id="errorMsg"></span>
@@ -414,7 +407,6 @@
     <div class="progress-label" id="progressLabel">Checking 0 / 0 keywords…</div>
   </div>
 
-  <!-- Results -->
   <div id="resultsSection" style="display:none">
     <div class="results-header">
       <div>
@@ -477,7 +469,6 @@
 
 </main>
 
-<!-- SERP Modal -->
 <div id="serpModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(26,23,20,0.55);backdrop-filter:blur(4px);padding:24px 16px;overflow-y:auto;">
   <div style="max-width:700px;margin:0 auto;background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow-lg);overflow:hidden;">
     <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
@@ -604,6 +595,131 @@
     document.getElementById('progressLabel').textContent = `Checking ${done} / ${total} keywords…`;
   }
 
+  // ── FIX: Robust domain extraction ────────────────────────────────────────
+  function extractHost(urlStr) {
+    if (!urlStr) return '';
+    try {
+      const u = new URL(urlStr.startsWith('http') ? urlStr : 'https://' + urlStr);
+      return u.hostname.replace(/^www\./i, '').toLowerCase();
+    } catch (_) {
+      // fallback: strip protocol and www, take up to first slash
+      return urlStr.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
+    }
+  }
+
+  // ── FIX: Strict domain matching — no substring tricks ────────────────────
+  // Returns true only when the SERP item is genuinely on the target domain.
+  // Allows subdomains of target (blog.example.com matches example.com)
+  // but NOT reverse (example.com must NOT match artexample.com).
+  function domainMatches(itemHost, targetHost) {
+    if (!itemHost || !targetHost) return false;
+    // exact match
+    if (itemHost === targetHost) return true;
+    // item is a subdomain of target: "blog.example.com" ends with ".example.com"
+    if (itemHost.endsWith('.' + targetHost)) return true;
+    // target is a subdomain of item (e.g. user searched "blog.example.com"):
+    if (targetHost.endsWith('.' + itemHost)) return true;
+    return false;
+  }
+
+  // ── FIX: Deep SERP traversal with correct rank propagation ───────────────
+  // The parent item's rank_absolute is the true SERP position.
+  // Nested items (e.g. sitelinks, image pack entries) share the parent's
+  // rank_absolute — they do NOT have an independent SERP position.
+  function findDomainInItems(items, targetHost) {
+    // We do a breadth-first walk so the shallowest (most authoritative) match wins.
+    // Each entry in the queue is { item, parentRank } where parentRank is the
+    // rank_absolute of the top-level SERP item that contains this node.
+    const queue = items.map(item => ({ item, parentRank: item.rank_absolute ?? null }));
+
+    while (queue.length > 0) {
+      const { item, parentRank } = queue.shift();
+
+      // Determine the rank to report: use parentRank (the top-level SERP position)
+      // unless we're already at the top level and the item itself has a rank.
+      const rank = parentRank;
+
+      // Try to match this item's domain/url against target
+      const urlToCheck = item.url || '';
+      const domainToCheck = item.domain || '';
+
+      let itemHost = '';
+      if (urlToCheck) {
+        itemHost = extractHost(urlToCheck);
+      } else if (domainToCheck) {
+        itemHost = domainToCheck.replace(/^www\./i, '').toLowerCase();
+      }
+
+      if (itemHost && domainMatches(itemHost, targetHost)) {
+        return { rank, url: urlToCheck || domainToCheck };
+      }
+
+      // Queue children — carry down the top-level rank_absolute
+      if (Array.isArray(item.items) && item.items.length > 0) {
+        for (const child of item.items) {
+          queue.push({ item: child, parentRank: rank });
+        }
+      }
+      // Some result types nest under `links` (sitelinks)
+      if (Array.isArray(item.links) && item.links.length > 0) {
+        for (const link of item.links) {
+          queue.push({ item: link, parentRank: rank });
+        }
+      }
+    }
+    return null;
+  }
+
+  async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDomain, targetHost) {
+    const payload = [{
+      keyword: kw,
+      location_code: locationCodeInt,
+      language_code: languageCode,
+      se_domain: seDomain,
+      device: selectedDevice,
+      depth: 100
+    }];
+
+    let resp, data;
+    try {
+      resp = await fetch(`https://api.dataforseo.com/v3/serp/${selectedSE}/organic/live/advanced`, {
+        method: 'POST',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      data = await resp.json();
+    } catch (netErr) {
+      return { keyword: kw, rank: null, url: null, error: 'Network error: ' + netErr.message, serpItems: [] };
+    }
+
+    if (data.status_code && data.status_code !== 20000) {
+      return { keyword: kw, rank: null, url: null, error: `API ${data.status_code}: ${data.status_message}`, serpItems: [] };
+    }
+
+    const task = (data.tasks || [])[0];
+    if (!task || task.status_code !== 20000) {
+      return { keyword: kw, rank: null, url: null, error: task?.status_message || 'Task error', serpItems: [] };
+    }
+
+    const items = task.result?.[0]?.items || [];
+
+    // ── FIX: use the new deep traversal with correct rank propagation ──────
+    const found = findDomainInItems(items, targetHost);
+
+    return {
+      keyword: task.data?.keyword || kw,
+      rank: found ? found.rank : null,
+      url:  found ? found.url  : null,
+      error: null,
+      serpItems: items.map(it => ({
+        type: it.type,
+        rank_absolute: it.rank_absolute,
+        domain: it.domain,
+        url: it.url
+      }))
+    };
+  }
+
   async function runCheck() {
     hideMessages();
 
@@ -624,7 +740,14 @@
     const seDomain     = parts[2];
     const locationCodeInt = parseInt(locationCode);
 
-    // UI: loading state
+    // ── FIX: build the clean target host once, correctly ─────────────────
+    const targetHost = domain
+      .replace(/^https?:\/\//i, '')
+      .replace(/^www\./i, '')
+      .split('/')[0]
+      .toLowerCase()
+      .trim();
+
     const btn = document.getElementById('checkBtn');
     btn.disabled = true;
     btn.classList.add('loading');
@@ -640,92 +763,15 @@
     const results = new Array(keywords.length).fill(null);
     let completed = 0;
 
-    const targetClean = domain
-      .replace(/^https?:\/\//i, '')
-      .replace(/^www\./i, '')
-      .replace(/\/.*$/, '')
-      .toLowerCase()
-      .trim();
-
-    async function fetchKeyword(kw) {
-      // Identical to original but WITHOUT keyword_info — this is the only cost change
-      const payload = [{
-        keyword: kw,
-        location_code: locationCodeInt,
-        language_code: languageCode,
-        se_domain: seDomain,
-        device: selectedDevice,
-        depth: 100
-      }];
-
-      let resp, data;
-      try {
-        resp = await fetch(`https://api.dataforseo.com/v3/serp/${selectedSE}/organic/live/advanced`, {
-          method: 'POST',
-          headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        data = await resp.json();
-      } catch (netErr) {
-        return { keyword: kw, rank: null, url: null, error: 'Network error: ' + netErr.message, serpItems: [] };
-      }
-
-      if (data.status_code && data.status_code !== 20000) {
-        return { keyword: kw, rank: null, url: null, error: `API ${data.status_code}: ${data.status_message}`, serpItems: [] };
-      }
-
-      const task = (data.tasks || [])[0];
-      if (!task || task.status_code !== 20000) {
-        return { keyword: kw, rank: null, url: null, error: task?.status_message || 'Task error', serpItems: [] };
-      }
-
-      const items = task.result?.[0]?.items || [];
-      let found = null;
-
-      for (const item of items) {
-        const candidates = [item];
-        if (item.items) candidates.push(...item.items);
-        for (const candidate of candidates) {
-          let itemHost = '';
-          try {
-            const urlStr = candidate.url || candidate.domain || '';
-            if (urlStr) {
-              const u = new URL(urlStr.startsWith('http') ? urlStr : 'https://' + urlStr);
-              itemHost = u.hostname.replace(/^www\./i, '').toLowerCase();
-            }
-          } catch (_) {
-            itemHost = (candidate.domain || '').replace(/^www\./i, '').toLowerCase();
-          }
-          if (!itemHost) continue;
-          const isMatch = itemHost === targetClean
-            || itemHost.endsWith('.' + targetClean)
-            || targetClean.endsWith('.' + itemHost);
-          if (isMatch) {
-            found = { rank: candidate.rank_absolute ?? candidate.rank_group ?? null, url: candidate.url || item.url };
-            break;
-          }
-        }
-        if (found) break;
-      }
-
-      return {
-        keyword: task.data?.keyword || kw,
-        rank: found ? found.rank : null,
-        url:  found ? found.url  : null,
-        error: null,
-        serpItems: items.map(it => ({ type: it.type, rank_absolute: it.rank_absolute, domain: it.domain, url: it.url }))
-      };
-    }
-
     try {
-      // Exact same concurrency loop as original — 5 at a time
       for (let i = 0; i < keywords.length; i += CONCURRENCY) {
         const chunk = keywords.slice(i, i + CONCURRENCY);
-        const chunkResults = await Promise.all(chunk.map(kw => fetchKeyword(kw)));
+        const chunkResults = await Promise.all(
+          chunk.map(kw => fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDomain, targetHost))
+        );
         chunkResults.forEach((r, j) => { results[i + j] = r; });
         completed += chunk.length;
         setProgress(completed, keywords.length);
-        // Partial render so user sees results live
         const partial = results.filter(Boolean);
         if (partial.length > 0) {
           allResults = partial;
@@ -765,7 +811,6 @@
       + `<span class="pill pill-green">${ranked.toLocaleString()} ranked</span>`
       + ` &nbsp;<span style="color:var(--text-3)">${notFound.toLocaleString()} not found</span>`;
 
-    // ── avg rank stats ────────────────────────────────────────────────────
     const rankedRanks = results.filter(r => r.rank !== null).map(r => r.rank).sort((a,b)=>a-b);
     const statRow = document.getElementById('avgStatRow');
     if (rankedRanks.length > 0) {
@@ -780,7 +825,6 @@
     } else {
       statRow.style.display = 'none';
     }
-    // ─────────────────────────────────────────────────────────────────────
 
     buildTable(results);
     hideMessages();
@@ -862,11 +906,12 @@
     if (!r || !r.serpItems) return;
     document.getElementById('serpModalTitle').textContent = `SERP: "${r.keyword}"`;
     document.getElementById('serpModalMeta').textContent = `${r.serpItems.length} items returned · target: ${document.getElementById('targetDomain').value.trim()}`;
-    const target = document.getElementById('targetDomain').value.trim().replace(/^https?:\/\//i,'').replace(/^www\./i,'').replace(/\/.*$/,'').toLowerCase();
+    const target = document.getElementById('targetDomain').value.trim()
+      .replace(/^https?:\/\//i,'').replace(/^www\./i,'').split('/')[0].toLowerCase();
     const tbody = document.getElementById('serpModalBody');
     tbody.innerHTML = r.serpItems.map(it => {
-      const dom = (it.domain||'').replace(/^www\./i,'').toLowerCase();
-      const isTarget = dom === target || dom.includes(target) || target.includes(dom);
+      const itemHost = extractHost(it.url || '') || (it.domain || '').replace(/^www\./i,'').toLowerCase();
+      const isTarget = domainMatches(itemHost, target);
       const bg = isTarget ? 'background:#E8F5E9;' : '';
       const domStyle = isTarget ? 'color:#2E7D32;font-weight:600;' : 'color:var(--text-2);';
       return `<tr style="border-bottom:1px solid var(--border);${bg}">
