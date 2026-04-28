@@ -7,132 +7,68 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F5F2EE;
-    --bg2: #EDEAE5;
-    --surface: #FAFAF8;
-    --border: #D8D3CC;
-    --border-strong: #B8B0A5;
-    --text: #1A1714;
-    --text-2: #5C5650;
-    --text-3: #9C9690;
-    --accent: #2C5F2E;
-    --accent-light: #E8F0E8;
-    --accent-mid: #4A8C4D;
-    --warn: #C44B2B;
-    --warn-light: #FDF0EC;
-    --gold: #9A7B3C;
-    --gold-light: #F5EFE0;
+    --bg: #F5F2EE; --bg2: #EDEAE5; --surface: #FAFAF8; --border: #D8D3CC;
+    --text: #1A1714; --text-2: #5C5650; --text-3: #9C9690;
+    --accent: #2C5F2E; --accent-light: #E8F0E8; --accent-mid: #4A8C4D;
+    --warn: #C44B2B; --warn-light: #FDF0EC; --gold: #9A7B3C; --gold-light: #F5EFE0;
     --shadow: 0 1px 3px rgba(26,23,20,0.08), 0 4px 16px rgba(26,23,20,0.06);
     --shadow-lg: 0 2px 8px rgba(26,23,20,0.1), 0 12px 40px rgba(26,23,20,0.08);
     --radius: 10px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    line-height: 1.6;
-  }
-
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 18px 40px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 0 var(--border);
-  }
-  .logo-mark {
-    width: 34px; height: 34px;
-    background: var(--accent);
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 40px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+  .logo-mark { width: 34px; height: 34px; background: var(--accent); border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
   .logo-mark svg { width: 18px; height: 18px; }
-  .logo-text { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); letter-spacing: -0.3px; }
+  .logo-text { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); }
   .logo-text span { color: var(--accent); }
-  header .tagline { margin-left: auto; font-size: 12px; color: var(--text-3); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; }
-
+  header .tagline { margin-left: auto; font-size: 12px; color: var(--text-3); font-family: 'DM Mono', monospace; }
   main { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
-
   .section-label { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; color: var(--text-3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
-
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 32px; margin-bottom: 20px; }
   .card-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); margin-bottom: 4px; }
   .card-desc { font-size: 13px; color: var(--text-3); margin-bottom: 22px; }
-
   .creds-card { background: var(--gold-light); border-color: #D4B97A; position: relative; overflow: hidden; }
   .creds-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), #C9A84C); }
   .creds-card .card-title { color: var(--gold); }
-
-  .savings-banner {
-    background: #EEF7EE; border: 1px solid #A5D6A7; border-radius: 8px;
-    padding: 11px 16px; margin-bottom: 20px; font-size: 12px;
-    color: var(--text-2); font-family: 'DM Mono', monospace;
-    display: flex; align-items: center; gap: 10px;
-  }
+  .savings-banner { background: #EEF7EE; border: 1px solid #A5D6A7; border-radius: 8px; padding: 11px 16px; margin-bottom: 20px; font-size: 12px; color: var(--text-2); font-family: 'DM Mono', monospace; display: flex; align-items: center; gap: 10px; }
   .savings-banner strong { color: #2E7D32; }
-
   .creds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media(max-width: 600px) { .creds-grid { grid-template-columns: 1fr; } }
-
+  @media(max-width:600px){.creds-grid{grid-template-columns:1fr;}}
   .field { display: flex; flex-direction: column; gap: 6px; }
-  .field label { font-size: 12px; font-weight: 500; color: var(--text-2); letter-spacing: 0.2px; }
-  .field input, .field textarea, .field select {
-    background: var(--surface); border: 1.5px solid var(--border); border-radius: 7px;
-    padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text);
-    transition: border-color 0.15s, box-shadow 0.15s; outline: none; width: 100%;
-  }
+  .field label { font-size: 12px; font-weight: 500; color: var(--text-2); }
+  .field input, .field textarea, .field select { background: var(--surface); border: 1.5px solid var(--border); border-radius: 7px; padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; outline: none; width: 100%; }
   .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent-mid); box-shadow: 0 0 0 3px rgba(44,95,46,0.12); }
   .field input[type="password"] { letter-spacing: 2px; }
   .field input[type="password"]:placeholder-shown { letter-spacing: 0; }
   .field textarea { resize: vertical; min-height: 110px; font-family: 'DM Mono', monospace; line-height: 1.7; }
   .field-hint { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
   .form-grid .full { grid-column: 1 / -1; }
-  @media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
-
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; }
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
   .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 1px 3px rgba(44,95,46,0.3); }
-  .btn-primary:hover { background: #1F4420; box-shadow: 0 2px 8px rgba(44,95,46,0.35); }
-  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:hover { background: #1F4420; }
   .btn-primary:disabled { background: var(--text-3); cursor: not-allowed; box-shadow: none; transform: none; }
   .btn-outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
   .btn-outline:hover { background: var(--accent-light); }
-  .btn-outline:disabled { color: var(--text-3); border-color: var(--border); cursor: not-allowed; }
   .btn-sm { padding: 7px 14px; font-size: 12px; }
-
   .actions-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
   .loading .spinner { display: block; }
   .loading .btn-text { opacity: 0.7; }
-
   .status-banner { border-radius: 7px; padding: 12px 16px; font-size: 13px; display: none; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
   .status-banner.error { background: var(--warn-light); border: 1px solid #F0C3B7; color: var(--warn); display: flex; }
-  .status-banner.info  { background: var(--accent-light); border: 1px solid #B8D4B9; color: var(--accent); display: flex; }
-
+  .status-banner.info { background: var(--accent-light); border: 1px solid #B8D4B9; color: var(--accent); display: flex; }
   .progress-wrap { display: none; margin-bottom: 20px; }
   .progress-wrap.visible { display: block; }
   .progress-bar-bg { height: 6px; background: var(--bg2); border-radius: 99px; overflow: hidden; }
   .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-mid)); border-radius: 99px; width: 0%; transition: width 0.4s ease; }
   .progress-label { font-size: 12px; color: var(--text-3); margin-top: 6px; font-family: 'DM Mono', monospace; }
-
   .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
   .results-count { font-size: 13px; color: var(--text-2); }
   .results-count strong { color: var(--text); font-weight: 600; }
-
   .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
   thead { background: var(--bg2); border-bottom: 1px solid var(--border); }
@@ -143,38 +79,29 @@
   tbody td { padding: 11px 16px; vertical-align: middle; }
   td.keyword-cell { font-weight: 500; color: var(--text); max-width: 220px; word-break: break-word; }
   td.url-cell { color: var(--accent-mid); font-family: 'DM Mono', monospace; font-size: 11px; max-width: 260px; word-break: break-all; }
-
   .rank-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 26px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 0 8px; }
-  .rank-1-3   { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
-  .rank-4-10  { background: #E8F0FB; color: #1565C0; border: 1px solid #90CAF9; }
+  .rank-1-3 { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+  .rank-4-10 { background: #E8F0FB; color: #1565C0; border: 1px solid #90CAF9; }
   .rank-11-30 { background: var(--gold-light); color: var(--gold); border: 1px solid #D4B97A; }
   .rank-31-100 { background: var(--bg2); color: var(--text-2); border: 1px solid var(--border); }
-  .rank-not-found { background: var(--warn-light); color: var(--warn); border: 1px solid #F0C3B7; font-size: 11px; min-width: auto; padding: 0 8px; }
-
+  .rank-not-found { background: var(--warn-light); color: var(--warn); border: 1px solid #F0C3B7; font-size: 11px; padding: 0 8px; }
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text-3); }
   .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.4; }
   .empty-state p { font-size: 14px; }
-
   .se-group { display: flex; gap: 8px; flex-wrap: wrap; }
   .se-btn { padding: 7px 14px; border-radius: 6px; border: 1.5px solid var(--border); background: var(--surface); font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text-2); cursor: pointer; transition: all 0.12s; }
   .se-btn:hover { border-color: var(--accent-mid); color: var(--accent); }
   .se-btn.active { background: var(--accent-light); border-color: var(--accent-mid); color: var(--accent); font-weight: 500; }
-
   .pw-wrap { position: relative; }
   .pw-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-3); padding: 0; display: flex; align-items: center; }
   .pw-wrap input { padding-right: 38px; }
-
   .filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
-  .filter-bar input { background: var(--surface); border: 1.5px solid var(--border); border-radius: 7px; padding: 7px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); outline: none; width: 220px; transition: border-color 0.15s, box-shadow 0.15s; }
+  .filter-bar input { background: var(--surface); border: 1.5px solid var(--border); border-radius: 7px; padding: 7px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); outline: none; width: 220px; }
   .filter-bar input:focus { border-color: var(--accent-mid); box-shadow: 0 0 0 3px rgba(44,95,46,0.12); }
-  .filter-bar select { background: var(--surface); border: 1.5px solid var(--border); border-radius: 7px; padding: 7px 10px; font-size: 13px; color: var(--text); outline: none; cursor: pointer; transition: border-color 0.15s; }
-  .filter-bar select:focus { border-color: var(--accent-mid); }
-
+  .filter-bar select { background: var(--surface); border: 1.5px solid var(--border); border-radius: 7px; padding: 7px 10px; font-size: 13px; color: var(--text); outline: none; cursor: pointer; }
   .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 500; }
   .pill-green { background: #E8F5E9; color: #2E7D32; }
-
   .kw-counter { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; margin-top: 3px; }
-
   #_ag{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
   #_ag._gone{display:none;}
   ._ab{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:40px 36px;width:100%;max-width:380px;}
@@ -187,15 +114,10 @@
   ._abt{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;width:100%;transition:background .15s;}
   ._abt:hover{background:#1F4420;}
   ._ae{font-size:12px;color:var(--warn);text-align:center;min-height:18px;font-family:'DM Mono',monospace;}
-
   .avg-stat-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
-  .avg-stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 20px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);}
+  .avg-stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 20px;box-shadow:var(--shadow);}
   .avg-stat-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);}
   .avg-stat-lbl{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;line-height:1.4;}
-
-  /* rank mode toggle */
-  .rank-mode-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:12px; color:var(--text-2); font-family:'DM Mono',monospace; }
-  .rank-mode-row .se-btn { font-size:11px; padding:5px 11px; }
 </style>
 </head>
 <body>
@@ -215,28 +137,22 @@
 
 <header>
   <div class="logo-mark">
-    <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.9"/>
-      <rect x="10" y="2" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.5"/>
-      <rect x="2" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.5"/>
-      <rect x="10" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.7"/>
-    </svg>
+    <svg viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.9"/><rect x="10" y="2" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.5"/><rect x="2" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.5"/><rect x="10" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.7"/></svg>
   </div>
   <div class="logo-text">Rank<span>Lens</span></div>
   <span class="tagline">powered by DataForSEO</span>
 </header>
 
 <main>
-
   <div class="savings-banner">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-    Cost-optimised: no search volume enrichment · same endpoint, same accuracy · <strong>~40% cheaper per keyword</strong> · 1,000 keywords ≈ $0.60
+    Cost-optimised: no search volume enrichment · same endpoint · <strong>~40% cheaper per keyword</strong> · 1,000 keywords ≈ $0.60
   </div>
 
   <div class="section-label">Step 1 — API Credentials</div>
   <div class="card creds-card">
     <div class="card-title">DataForSEO API Keys</div>
-    <div class="card-desc">Enter your login and password from your DataForSEO account dashboard. These are stored only in your browser session.</div>
+    <div class="card-desc">Enter your login and password from your DataForSEO account dashboard. Stored in browser session only.</div>
     <div class="creds-grid">
       <div class="field">
         <label>API Login (Email)</label>
@@ -246,7 +162,7 @@
         <label>API Password</label>
         <div class="pw-wrap">
           <input type="password" id="apiPassword" placeholder="••••••••••••" autocomplete="off">
-          <button class="pw-toggle" onclick="togglePw()" title="Show/hide password" tabindex="-1">
+          <button class="pw-toggle" onclick="togglePw()" tabindex="-1">
             <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
@@ -257,13 +173,12 @@
   <div class="section-label">Step 2 — Domain &amp; Keywords</div>
   <div class="card">
     <div class="card-title">Search Configuration</div>
-    <div class="card-desc">Enter the domain you want to track and the keywords to check rankings for.</div>
-
+    <div class="card-desc">Enter the domain and keywords to check rankings for.</div>
     <div class="form-grid">
       <div class="field">
         <label>Target Domain</label>
         <input type="text" id="targetDomain" placeholder="example.com">
-        <div class="field-hint">Just the domain — no https:// needed</div>
+        <div class="field-hint">Just the root domain — no https:// or paths</div>
       </div>
 
       <div class="field" style="grid-column:1/-1">
@@ -356,17 +271,17 @@
             </optgroup>
           </select>
           <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px;">
-            <input type="text" id="locationSearch" placeholder="🔍 Search location…" oninput="filterLocations()" style="background:var(--surface);border:1.5px solid var(--border);border-radius:7px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%;transition:border-color 0.15s,box-shadow 0.15s;">
-            <div class="field-hint" id="locationHint">Country, state, or city — India cities included</div>
+            <input type="text" id="locationSearch" placeholder="🔍 Search location…" oninput="filterLocations()" style="background:var(--surface);border:1.5px solid var(--border);border-radius:7px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;width:100%;">
+            <div class="field-hint" id="locationHint">Country, state, or city</div>
           </div>
         </div>
       </div>
 
       <div class="field full">
-        <label>Keywords <span style="color:var(--text-3); font-weight:400">(one per line)</span></label>
-        <textarea id="keywords" placeholder="seo tools&#10;keyword research&#10;rank tracker&#10;backlink checker" oninput="updateKwCount()"></textarea>
+        <label>Keywords <span style="color:var(--text-3);font-weight:400">(one per line)</span></label>
+        <textarea id="keywords" placeholder="seo tools&#10;keyword research&#10;rank tracker" oninput="updateKwCount()"></textarea>
         <div id="kwCounter" class="kw-counter">0 keywords</div>
-        <div class="field-hint">Enter up to 1,000 keywords — results show rankings up to position 100</div>
+        <div class="field-hint">Up to 1,000 keywords — checks top 100 results</div>
       </div>
 
       <div class="field">
@@ -388,10 +303,10 @@
       <div class="field full">
         <label>Rank Display Mode</label>
         <div class="se-group" id="rankModeGroup">
-          <button class="se-btn active" data-mode="organic" onclick="selectRankMode(this)" title="Position among organic (non-ad, non-featured) results — matches what most SEO tools show">Organic position</button>
-          <button class="se-btn" data-mode="absolute" onclick="selectRankMode(this)" title="Raw SERP position including ads, featured snippets, PAA boxes etc.">Absolute SERP position</button>
+          <button class="se-btn active" data-mode="organic" onclick="selectRankMode(this)">Organic position</button>
+          <button class="se-btn" data-mode="absolute" onclick="selectRankMode(this)">Absolute SERP position</button>
         </div>
-        <div class="field-hint" id="rankModeHint">Organic position = rank among blue-link results only (recommended for SEO tracking)</div>
+        <div class="field-hint" id="rankModeHint">Organic position = rank among blue-link results only (matches Ahrefs / Semrush)</div>
       </div>
     </div>
 
@@ -433,24 +348,9 @@
     </div>
 
     <div class="avg-stat-row" id="avgStatRow" style="display:none">
-      <div class="avg-stat">
-        <div>
-          <div class="avg-stat-val" id="avgRankVal">—</div>
-          <div class="avg-stat-lbl">Avg. Rank<br>(ranked only)</div>
-        </div>
-      </div>
-      <div class="avg-stat">
-        <div>
-          <div class="avg-stat-val" id="medRankVal">—</div>
-          <div class="avg-stat-lbl">Median Rank<br>(ranked only)</div>
-        </div>
-      </div>
-      <div class="avg-stat">
-        <div>
-          <div class="avg-stat-val" id="top10Val">—</div>
-          <div class="avg-stat-lbl">Top 10<br>keywords</div>
-        </div>
-      </div>
+      <div class="avg-stat"><div class="avg-stat-val" id="avgRankVal">—</div><div class="avg-stat-lbl">Avg. Rank<br>(ranked only)</div></div>
+      <div class="avg-stat"><div class="avg-stat-val" id="medRankVal">—</div><div class="avg-stat-lbl">Median Rank<br>(ranked only)</div></div>
+      <div class="avg-stat"><div class="avg-stat-val" id="top10Val">—</div><div class="avg-stat-lbl">Top 10<br>keywords</div></div>
     </div>
 
     <div class="filter-bar">
@@ -466,30 +366,22 @@
 
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Keyword</th>
-            <th>Rank</th>
-            <th>Ranking URL</th>
-            <th>SERP</th>
-          </tr>
-        </thead>
+        <thead><tr><th>#</th><th>Keyword</th><th>Rank</th><th>Ranking URL</th><th>SERP</th></tr></thead>
         <tbody id="resultsBody"></tbody>
       </table>
     </div>
   </div>
-
 </main>
 
+<!-- SERP Modal -->
 <div id="serpModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(26,23,20,0.55);backdrop-filter:blur(4px);padding:24px 16px;overflow-y:auto;">
-  <div style="max-width:740px;margin:0 auto;background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow-lg);overflow:hidden;">
+  <div style="max-width:780px;margin:0 auto;background:var(--surface);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow-lg);overflow:hidden;">
     <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;">
       <div>
         <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)" id="serpModalTitle">Full SERP</div>
         <div style="font-size:12px;color:var(--text-3);margin-top:2px;font-family:'DM Mono',monospace;" id="serpModalMeta"></div>
       </div>
-      <button onclick="document.getElementById('serpModal').style.display='none'" style="background:var(--bg2);border:1px solid var(--border);border-radius:7px;width:32px;height:32px;cursor:pointer;font-size:18px;line-height:1;color:var(--text-2);display:flex;align-items:center;justify-content:center;">×</button>
+      <button onclick="document.getElementById('serpModal').style.display='none'" style="background:var(--bg2);border:1px solid var(--border);border-radius:7px;width:32px;height:32px;cursor:pointer;font-size:18px;color:var(--text-2);display:flex;align-items:center;justify-content:center;">×</button>
     </div>
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--surface);">
@@ -499,7 +391,7 @@
             <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;white-space:nowrap;">Org#</th>
             <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;">Type</th>
             <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;">Domain</th>
-            <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;">URL</th>
+            <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;">URL / Match</th>
           </tr>
         </thead>
         <tbody id="serpModalBody"></tbody>
@@ -509,518 +401,401 @@
 </div>
 
 <script>
-  // ── auth ──────────────────────────────────────────────────────────────────
-  (function(){if(sessionStorage.getItem('\x5f\x72l\x61\x75\x74\x68')==='1'){document.getElementById('_ag').classList.add('_gone');}})();
-  function _ck(){
-    var u=document.getElementById('_au').value.trim();
-    var p=document.getElementById('_ap').value;
-    var e=document.getElementById('_aer');
-    if(u===atob('c2h1YmhheWFuQGlhbW5lbw==')&&p===atob('SnVzdFdvcmRzMjAyNg==')){
-      sessionStorage.setItem('\x5f\x72l\x61\x75\x74\x68','1');
-      document.getElementById('_ag').classList.add('_gone');
-    } else {
-      e.textContent='Invalid credentials.';
-      document.getElementById('_au').style.borderColor='var(--warn)';
-      document.getElementById('_ap').style.borderColor='var(--warn)';
-      setTimeout(function(){e.textContent='';document.getElementById('_au').style.borderColor='';document.getElementById('_ap').style.borderColor='';},2200);
-    }
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+(function(){if(sessionStorage.getItem('\x5f\x72l\x61\x75\x74\x68')==='1')document.getElementById('_ag').classList.add('_gone');})();
+function _ck(){
+  var u=document.getElementById('_au').value.trim(),p=document.getElementById('_ap').value,e=document.getElementById('_aer');
+  if(u===atob('c2h1YmhheWFuQGlhbW5lbw==')&&p===atob('SnVzdFdvcmRzMjAyNg==')){sessionStorage.setItem('\x5f\x72l\x61\x75\x74\x68','1');document.getElementById('_ag').classList.add('_gone');}
+  else{e.textContent='Invalid credentials.';setTimeout(()=>{e.textContent='';},2200);}
+}
+document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!document.getElementById('_ag').classList.contains('_gone'))_ck();});
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let selectedSE='google', selectedDevice='desktop', selectedRankMode='organic', allResults=[];
+
+// ── DOMAIN HELPERS ────────────────────────────────────────────────────────────
+// Strip protocol, www, trailing slash, path — return bare hostname
+function bareHost(s){
+  if(!s||typeof s!=='string')return '';
+  try{
+    if(!/^https?:\/\//i.test(s))s='https://'+s;
+    return new URL(s).hostname.replace(/^www\./i,'').toLowerCase().trim();
+  }catch(_){
+    return s.replace(/^https?:\/\//i,'').replace(/^www\./i,'').split('/')[0].split('?')[0].toLowerCase().trim();
   }
-  document.addEventListener('keydown',function(ev){if(ev.key==='Enter'&&!document.getElementById('_ag').classList.contains('_gone'))_ck();});
-  // ─────────────────────────────────────────────────────────────────────────
+}
 
-  let selectedSE = 'google';
-  let selectedDevice = 'desktop';
-  let selectedRankMode = 'organic'; // 'organic' | 'absolute'
-  let allResults = [];
+// Does itemHost belong to targetHost?
+// Handles exact match, subdomains (blog.example.com → example.com)
+function hostBelongsTo(itemHost, targetHost){
+  if(!itemHost||!targetHost)return false;
+  if(itemHost===targetHost)return true;
+  if(itemHost.endsWith('.'+targetHost))return true;
+  return false;
+}
 
-  // ── ORGANIC RESULT TYPES (DataForSEO) ────────────────────────────────────
-  // These are the item types that count as real organic results.
-  // Everything else (featured_snippet, people_also_ask, knowledge_graph,
-  // local_pack, video, images, shopping etc.) is excluded from organic count.
-  const ORGANIC_TYPES = new Set([
-    'organic',
-    'organic_result',  // alternate casing seen in some responses
-  ]);
-
-  function updateKwCount() {
-    const n = getKeywords().length;
-    document.getElementById('kwCounter').textContent = `${n.toLocaleString()} keyword${n !== 1 ? 's' : ''}`;
-    document.getElementById('liveEst').textContent = n > 0 ? `~$${(n * 0.0006).toFixed(2)} estimated` : '';
-  }
-
-  function getKeywords() {
-    return [...new Set(
-      document.getElementById('keywords').value.split('\n').map(k => k.trim()).filter(Boolean)
-    )];
-  }
-
-  function filterLocations() {
-    const q = document.getElementById('locationSearch').value.toLowerCase().trim();
-    const sel = document.getElementById('locationCode');
-    const hint = document.getElementById('locationHint');
-    if (!q) {
-      Array.from(sel.options).forEach(o => o.style.display = '');
-      Array.from(sel.querySelectorAll('optgroup')).forEach(g => g.style.display = '');
-      hint.textContent = 'Country, state, or city — India cities included';
-      return;
-    }
-    let firstMatch = null, matchCount = 0;
-    Array.from(sel.querySelectorAll('optgroup')).forEach(group => {
-      let groupHasMatch = false;
-      Array.from(group.options).forEach(opt => {
-        const matches = opt.text.toLowerCase().includes(q);
-        opt.style.display = matches ? '' : 'none';
-        if (matches) { groupHasMatch = true; matchCount++; if (!firstMatch) firstMatch = opt; }
-      });
-      group.style.display = groupHasMatch ? '' : 'none';
-    });
-    if (firstMatch) sel.value = firstMatch.value;
-    hint.textContent = matchCount ? `${matchCount} location${matchCount > 1 ? 's' : ''} found` : 'No matches — try a different name';
-  }
-
-  function selectSE(btn) {
-    document.querySelectorAll('#seGroup .se-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); selectedSE = btn.dataset.se;
-  }
-  function selectDevice(btn) {
-    document.querySelectorAll('#deviceGroup .se-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); selectedDevice = btn.dataset.dev;
-  }
-  function selectRankMode(btn) {
-    document.querySelectorAll('#rankModeGroup .se-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedRankMode = btn.dataset.mode;
-    document.getElementById('rankModeHint').textContent = selectedRankMode === 'organic'
-      ? 'Organic position = rank among blue-link results only (recommended for SEO tracking)'
-      : 'Absolute SERP position = includes ads, featured snippets, PAA boxes etc.';
-  }
-
-  function togglePw() {
-    const el = document.getElementById('apiPassword');
-    const icon = document.getElementById('eyeIcon');
-    if (el.type === 'password') {
-      el.type = 'text';
-      icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
-    } else {
-      el.type = 'password';
-      icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-    }
-  }
-
-  function showError(msg) {
-    document.getElementById('errorMsg').textContent = msg;
-    document.getElementById('errorBanner').className = 'status-banner error';
-    document.getElementById('infoBanner').style.display = 'none';
-  }
-  function showInfo(msg) {
-    document.getElementById('infoMsg').textContent = msg;
-    document.getElementById('infoBanner').className = 'status-banner info';
-    document.getElementById('errorBanner').style.display = 'none';
-  }
-  function hideMessages() {
-    document.getElementById('errorBanner').style.display = 'none';
-    document.getElementById('infoBanner').style.display = 'none';
-  }
-
-  function setProgress(done, total) {
-    const pct = total ? (done / total) * 100 : 0;
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressLabel').textContent = `Checking ${done} / ${total} keywords…`;
-  }
-
-  // ── Domain helpers ────────────────────────────────────────────────────────
-  function extractHost(urlStr) {
-    if (!urlStr) return '';
-    try {
-      const u = new URL(urlStr.startsWith('http') ? urlStr : 'https://' + urlStr);
-      return u.hostname.replace(/^www\./i, '').toLowerCase();
-    } catch (_) {
-      return urlStr.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].toLowerCase();
-    }
-  }
-
-  function domainMatches(itemHost, targetHost) {
-    if (!itemHost || !targetHost) return false;
-    if (itemHost === targetHost) return true;
-    if (itemHost.endsWith('.' + targetHost)) return true;
-    if (targetHost.endsWith('.' + itemHost)) return true;
-    return false;
-  }
-
-  // ── CORE FIX: Parse SERP items into flat organic list + domain search ─────
-  //
-  // Strategy:
-  //   1. Walk ALL items recursively, collecting every URL/domain we can find.
-  //   2. For organic mode: only consider items with type === 'organic'.
-  //      Assign organic position = the item's rank among organic items only.
-  //   3. For absolute mode: consider all items, use rank_absolute.
-  //   4. Nested items (sitelinks etc.) inherit their parent's rank.
-  //
-  // This fixes:
-  //   - Featured snippets / PAA / knowledge panels inflating rank numbers
-  //   - Missing results because domain only appears in nested sitelinks
-  //   - Wrong rank because rank_absolute was used for organic position
-  // ─────────────────────────────────────────────────────────────────────────
-
-  function parseSerp(items, targetHost, mode) {
-    // Step 1: flatten all items with their organic_position and absolute position
-    // organic_position is computed by counting only type==='organic' items in order.
-    const flat = []; // { type, rank_absolute, organic_position, url, domain, fromParent }
-
-    let organicCounter = 0;
-
-    // Walk items in order (rank_absolute order)
-    const sorted = [...items].sort((a, b) => (a.rank_absolute ?? 999) - (b.rank_absolute ?? 999));
-
-    for (const item of sorted) {
-      const isOrganic = item.type === 'organic';
-      if (isOrganic) organicCounter++;
-
-      const orgPos = isOrganic ? organicCounter : null;
-
-      // Add the item itself
-      flat.push({
-        type: item.type,
-        rank_absolute: item.rank_absolute,
-        organic_position: orgPos,
-        url: item.url || '',
-        domain: item.domain || '',
-      });
-
-      // Add nested items (sitelinks, etc.) — they inherit parent's rank / organic_position
-      if (Array.isArray(item.items)) {
-        for (const child of item.items) {
-          flat.push({
-            type: item.type + '_nested',
-            rank_absolute: item.rank_absolute,
-            organic_position: orgPos,
-            url: child.url || '',
-            domain: child.domain || '',
-          });
-        }
-      }
-      if (Array.isArray(item.links)) {
-        for (const link of item.links) {
-          flat.push({
-            type: item.type + '_link',
-            rank_absolute: item.rank_absolute,
-            organic_position: orgPos,
-            url: link.url || '',
-            domain: link.domain || '',
-          });
-        }
-      }
-    }
-
-    // Step 2: find the best match for our target domain
-    // In organic mode: only consider entries that have an organic_position
-    // In absolute mode: consider everything
-
-    const candidates = mode === 'organic'
-      ? flat.filter(f => f.organic_position !== null)
-      : flat;
-
-    for (const entry of candidates) {
-      const urlHost = extractHost(entry.url);
-      const domHost = (entry.domain || '').replace(/^www\./i, '').toLowerCase();
-      const matched = (urlHost && domainMatches(urlHost, targetHost))
-                   || (domHost && domainMatches(domHost, targetHost));
-      if (matched) {
-        return {
-          rank: mode === 'organic' ? entry.organic_position : entry.rank_absolute,
-          url: entry.url || entry.domain,
-        };
-      }
-    }
-
+// ── EXHAUSTIVE DOMAIN SEARCHER ────────────────────────────────────────────────
+// Recursively walks ANY object and collects every string value that looks like
+// a URL or domain, then tests against targetHost.
+// Returns the first matching string value found, or null.
+function findDomainInObject(obj, targetHost, _depth){
+  if(!obj||_depth>8)return null;
+  if(typeof obj==='string'){
+    if(obj.length<4||obj.length>500)return null;
+    const h=bareHost(obj);
+    if(h&&hostBelongsTo(h,targetHost))return obj;
     return null;
   }
-
-  async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDomain, targetHost) {
-    const payload = [{
-      keyword: kw,
-      location_code: locationCodeInt,
-      language_code: languageCode,
-      se_domain: seDomain,
-      device: selectedDevice,
-      depth: 100,
-      // include all item types so we get full organic list
-    }];
-
-    let resp, data;
-    try {
-      resp = await fetch(`https://api.dataforseo.com/v3/serp/${selectedSE}/organic/live/advanced`, {
-        method: 'POST',
-        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      data = await resp.json();
-    } catch (netErr) {
-      return { keyword: kw, rank: null, url: null, error: 'Network error: ' + netErr.message, serpItems: [], organicCount: 0 };
+  if(Array.isArray(obj)){
+    for(const v of obj){
+      const r=findDomainInObject(v,targetHost,_depth+1);
+      if(r)return r;
     }
-
-    if (data.status_code && data.status_code !== 20000) {
-      return { keyword: kw, rank: null, url: null, error: `API ${data.status_code}: ${data.status_message}`, serpItems: [], organicCount: 0 };
-    }
-
-    const task = (data.tasks || [])[0];
-    if (!task || task.status_code !== 20000) {
-      return { keyword: kw, rank: null, url: null, error: task?.status_message || 'Task error', serpItems: [], organicCount: 0 };
-    }
-
-    const items = task.result?.[0]?.items || [];
-
-    // Count organic items for display
-    const organicCount = items.filter(i => i.type === 'organic').length;
-
-    // Find using selected mode
-    const found = parseSerp(items, targetHost, selectedRankMode);
-
-    // Build SERP display data with both absolute + organic positions
-    let orgIdx = 0;
-    const serpItems = items
-      .sort((a, b) => (a.rank_absolute ?? 999) - (b.rank_absolute ?? 999))
-      .map(it => {
-        if (it.type === 'organic') orgIdx++;
-        return {
-          type: it.type,
-          rank_absolute: it.rank_absolute,
-          organic_position: it.type === 'organic' ? orgIdx : null,
-          domain: it.domain,
-          url: it.url,
-        };
-      });
-
-    return {
-      keyword: task.data?.keyword || kw,
-      rank: found ? found.rank : null,
-      url:  found ? found.url  : null,
-      rankMode: selectedRankMode,
-      error: null,
-      serpItems,
-      organicCount,
-    };
+    return null;
   }
-
-  async function runCheck() {
-    hideMessages();
-
-    const login    = document.getElementById('apiLogin').value.trim();
-    const password = document.getElementById('apiPassword').value.trim();
-    const domain   = document.getElementById('targetDomain').value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
-    const keywords = getKeywords();
-
-    if (!login || !password) { showError('Please enter your DataForSEO API Login and Password.'); return; }
-    if (!domain)             { showError('Please enter a target domain.'); return; }
-    if (keywords.length === 0) { showError('Please enter at least one keyword.'); return; }
-    if (keywords.length > 1000) { showError('Please enter up to 1,000 keywords at a time.'); return; }
-
-    const locationRaw  = document.getElementById('locationCode').value;
-    const parts        = locationRaw.split(',');
-    const locationCode = parts[0];
-    const languageCode = parts[1];
-    const seDomain     = parts[2];
-    const locationCodeInt = parseInt(locationCode);
-
-    const targetHost = domain
-      .replace(/^https?:\/\//i, '')
-      .replace(/^www\./i, '')
-      .split('/')[0]
-      .toLowerCase()
-      .trim();
-
-    const btn = document.getElementById('checkBtn');
-    btn.disabled = true;
-    btn.classList.add('loading');
-    document.getElementById('btnSpinner').style.display = 'block';
-    document.querySelector('.btn-icon').style.display = 'none';
-    document.getElementById('progressWrap').classList.add('visible');
-    document.getElementById('resultsSection').style.display = 'none';
-    allResults = [];
-    setProgress(0, keywords.length);
-
-    const authHeader = 'Basic ' + btoa(login + ':' + password);
-    const CONCURRENCY = 5;
-    const results = new Array(keywords.length).fill(null);
-    let completed = 0;
-
-    try {
-      for (let i = 0; i < keywords.length; i += CONCURRENCY) {
-        const chunk = keywords.slice(i, i + CONCURRENCY);
-        const chunkResults = await Promise.all(
-          chunk.map(kw => fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDomain, targetHost))
-        );
-        chunkResults.forEach((r, j) => { results[i + j] = r; });
-        completed += chunk.length;
-        setProgress(completed, keywords.length);
-        const partial = results.filter(Boolean);
-        if (partial.length > 0) {
-          allResults = partial;
-          renderResults(partial, domain, true);
-        }
+  if(typeof obj==='object'){
+    // Prioritise known URL/domain fields first for speed and accuracy
+    const priorityKeys=['url','domain','breadcrumb','source_url','canonical_url','website','href','link','page_url','relative_url','amp_version_url'];
+    for(const k of priorityKeys){
+      if(obj[k]){
+        const r=findDomainInObject(obj[k],targetHost,_depth+1);
+        if(r)return r;
       }
-      allResults = results.filter(Boolean);
-      renderResults(allResults, domain, false);
-
-    } catch (err) {
-      showError(err.message);
-      document.getElementById('progressWrap').classList.remove('visible');
-    } finally {
-      btn.disabled = false;
-      btn.classList.remove('loading');
-      document.getElementById('btnSpinner').style.display = 'none';
-      document.querySelector('.btn-icon').style.display = '';
+    }
+    // Then walk all other keys
+    for(const k of Object.keys(obj)){
+      if(priorityKeys.includes(k))continue;
+      const r=findDomainInObject(obj[k],targetHost,_depth+1);
+      if(r)return r;
     }
   }
+  return null;
+}
 
-  function rankClass(rank) {
-    if (rank === null) return 'rank-not-found';
-    if (rank <= 3)  return 'rank-1-3';
-    if (rank <= 10) return 'rank-4-10';
-    if (rank <= 30) return 'rank-11-30';
-    return 'rank-31-100';
-  }
-  function rankLabel(rank) { return rank !== null ? '#' + rank : 'Not found'; }
+// ── CORE SERP PARSER ──────────────────────────────────────────────────────────
+//
+// The only reliable approach: iterate top-level items in rank_absolute order,
+// maintain an organic counter (type==='organic' only), and for EACH item do a
+// deep recursive search of the entire item object for the target domain.
+//
+// This catches:
+//   ✓ Organic results (normal)
+//   ✓ Results only visible in sitelinks / sub-items (nested 3+ levels)
+//   ✓ Featured snippets owned by target (reported as organic rank 1 equiv)
+//   ✓ Breadcrumb-only domain presence
+//   ✓ Any DataForSEO field we don't know about yet
+//
+// Cost: unchanged — same single API call per keyword.
+// ─────────────────────────────────────────────────────────────────────────────
+function parseSerp(items, targetHost, mode){
+  if(!items||!items.length)return null;
 
-  function renderResults(results, domain, partial) {
-    document.getElementById('resultsSection').style.display = 'block';
-    if (!partial) document.getElementById('progressWrap').classList.remove('visible');
-    const ranked   = results.filter(r => r.rank !== null).length;
-    const notFound = results.filter(r => r.rank === null).length;
-    const modeLabel = selectedRankMode === 'organic' ? 'organic pos.' : 'abs. pos.';
-    document.getElementById('resultsCount').innerHTML =
-      `<strong>${results.length.toLocaleString()}</strong> keywords checked for <strong>${domain}</strong> — `
-      + `<span class="pill pill-green">${ranked.toLocaleString()} ranked</span>`
-      + ` &nbsp;<span style="color:var(--text-3)">${notFound.toLocaleString()} not found</span>`
-      + ` &nbsp;<span style="color:var(--text-3);font-family:'DM Mono',monospace;font-size:11px;">(${modeLabel})</span>`;
+  // Sort strictly by rank_absolute ascending
+  const sorted=[...items].sort((a,b)=>(a.rank_absolute??99999)-(b.rank_absolute??99999));
 
-    const rankedRanks = results.filter(r => r.rank !== null).map(r => r.rank).sort((a,b)=>a-b);
-    const statRow = document.getElementById('avgStatRow');
-    if (rankedRanks.length > 0) {
-      const avg = (rankedRanks.reduce((s,v)=>s+v,0) / rankedRanks.length).toFixed(1);
-      const mid = Math.floor(rankedRanks.length/2);
-      const median = rankedRanks.length % 2 !== 0 ? rankedRanks[mid] : ((rankedRanks[mid-1]+rankedRanks[mid])/2).toFixed(1);
-      const top10count = rankedRanks.filter(r=>r<=10).length;
-      document.getElementById('avgRankVal').textContent = avg;
-      document.getElementById('medRankVal').textContent = median;
-      document.getElementById('top10Val').textContent = top10count;
-      statRow.style.display = 'flex';
+  let organicCounter=0;
+
+  for(const item of sorted){
+    const type=(item.type||'').toLowerCase().trim();
+    const isOrg=(type==='organic');
+    const isFeaturedSnippet=(type==='featured_snippet');
+
+    if(isOrg)organicCounter++;
+
+    if(mode==='organic'){
+      // In organic mode, only yield a rank for type=organic items.
+      // Also catch featured_snippet owned by target (= organic #1 equivalent).
+      if(isOrg){
+        const match=findDomainInObject(item,targetHost,0);
+        if(match)return{rank:organicCounter, url:item.url||match};
+      } else if(isFeaturedSnippet){
+        // Featured snippets sit above organic results. If our domain owns it,
+        // report as rank 1 (same as Ahrefs, Semrush behaviour).
+        const match=findDomainInObject(item,targetHost,0);
+        if(match)return{rank:1, url:item.url||match};
+      }
+      // All other non-organic types (ads, PAA, local pack, video, images,
+      // knowledge panel, etc.) are skipped in organic mode.
     } else {
-      statRow.style.display = 'none';
+      // Absolute mode: search every item type, return rank_absolute
+      const match=findDomainInObject(item,targetHost,0);
+      if(match)return{rank:item.rank_absolute, url:item.url||match};
     }
-
-    buildTable(results);
-    hideMessages();
-    if (!partial && ranked === 0) showInfo('No rankings found. Make sure the domain is correct and is ranking in the top 100 results. Try switching to "Absolute SERP position" mode to debug.');
   }
 
-  function buildTable(results) {
-    const tbody = document.getElementById('resultsBody');
-    if (results.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <p>No results to display</p></div></td></tr>`;
-      return;
+  return null;
+}
+
+// ── API FETCH ─────────────────────────────────────────────────────────────────
+async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDomain, targetHost){
+  const payload=[{
+    keyword: kw,
+    location_code: locationCodeInt,
+    language_code: languageCode,
+    se_domain: seDomain,
+    device: selectedDevice,
+    depth: 100,
+  }];
+
+  let resp, data;
+  try{
+    resp=await fetch(`https://api.dataforseo.com/v3/serp/${selectedSE}/organic/live/advanced`,{
+      method:'POST',
+      headers:{'Authorization':authHeader,'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    data=await resp.json();
+  }catch(e){
+    return{keyword:kw,rank:null,url:null,error:'Network error: '+e.message,serpItems:[],organicCount:0};
+  }
+
+  if(data.status_code&&data.status_code!==20000)
+    return{keyword:kw,rank:null,url:null,error:`API ${data.status_code}: ${data.status_message}`,serpItems:[],organicCount:0};
+
+  const task=(data.tasks||[])[0];
+  if(!task||task.status_code!==20000)
+    return{keyword:kw,rank:null,url:null,error:task?.status_message||'Task error',serpItems:[],organicCount:0};
+
+  const items=task.result?.[0]?.items||[];
+  const organicCount=items.filter(i=>(i.type||'')==='organic').length;
+  const found=parseSerp(items, targetHost, selectedRankMode);
+
+  // Build SERP display (top-level items only, for the modal)
+  let orgIdx=0;
+  const serpItems=[...items]
+    .sort((a,b)=>(a.rank_absolute??99999)-(b.rank_absolute??99999))
+    .map(it=>{
+      const t=(it.type||'').toLowerCase();
+      if(t==='organic')orgIdx++;
+      return{
+        type:it.type, rank_absolute:it.rank_absolute,
+        organic_position:t==='organic'?orgIdx:null,
+        domain:it.domain, url:it.url,
+        // Flag if this item contains our target domain anywhere
+        hasTarget:!!findDomainInObject(it,targetHost,0),
+      };
+    });
+
+  return{
+    keyword:task.data?.keyword||kw,
+    rank:found?found.rank:null,
+    url:found?found.url:null,
+    rankMode:selectedRankMode,
+    error:null, serpItems, organicCount,
+  };
+}
+
+// ── RUN ───────────────────────────────────────────────────────────────────────
+async function runCheck(){
+  hideMessages();
+  const login=document.getElementById('apiLogin').value.trim();
+  const password=document.getElementById('apiPassword').value.trim();
+  const rawDomain=document.getElementById('targetDomain').value.trim().replace(/^https?:\/\//i,'').replace(/\/$/,'');
+  const keywords=getKeywords();
+
+  if(!login||!password){showError('Please enter your DataForSEO API Login and Password.');return;}
+  if(!rawDomain){showError('Please enter a target domain.');return;}
+  if(!keywords.length){showError('Please enter at least one keyword.');return;}
+  if(keywords.length>1000){showError('Maximum 1,000 keywords at a time.');return;}
+
+  const parts=document.getElementById('locationCode').value.split(',');
+  const locationCodeInt=parseInt(parts[0]);
+  const languageCode=parts[1];
+  const seDomain=parts[2];
+  const targetHost=bareHost(rawDomain);
+
+  const btn=document.getElementById('checkBtn');
+  btn.disabled=true; btn.classList.add('loading');
+  document.getElementById('btnSpinner').style.display='block';
+  document.querySelector('.btn-icon').style.display='none';
+  document.getElementById('progressWrap').classList.add('visible');
+  document.getElementById('resultsSection').style.display='none';
+  allResults=[]; setProgress(0,keywords.length);
+
+  const authHeader='Basic '+btoa(login+':'+password);
+  const CONCURRENCY=5;
+  const results=new Array(keywords.length).fill(null);
+  let completed=0;
+
+  try{
+    for(let i=0;i<keywords.length;i+=CONCURRENCY){
+      const chunk=keywords.slice(i,i+CONCURRENCY);
+      const chunkRes=await Promise.all(
+        chunk.map(kw=>fetchKeyword(kw,authHeader,locationCodeInt,languageCode,seDomain,targetHost))
+      );
+      chunkRes.forEach((r,j)=>{results[i+j]=r;});
+      completed+=chunk.length;
+      setProgress(completed,keywords.length);
+      const partial=results.filter(Boolean);
+      if(partial.length){allResults=partial;renderResults(partial,rawDomain,true);}
     }
-    tbody.innerHTML = results.map((r, i) => {
-      const serpIdx = allResults.findIndex(a => a.keyword === r.keyword);
-      return `<tr>
-        <td style="color:var(--text-3);font-family:'DM Mono',monospace;font-size:12px;width:40px">${i+1}</td>
-        <td class="keyword-cell">${escHtml(r.keyword)}</td>
-        <td><span class="rank-badge ${rankClass(r.rank)}">${rankLabel(r.rank)}</span></td>
-        <td class="url-cell">${r.url
-          ? `<a href="${escHtml(r.url)}" target="_blank" style="color:var(--accent-mid);text-decoration:none;" title="${escHtml(r.url)}">${truncate(r.url, 60)}</a>`
-          : '<span style="color:var(--text-3)">—</span>'}</td>
-        <td><button onclick="viewSerp(${serpIdx >= 0 ? serpIdx : i})" style="background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text-2);">View</button></td>
-      </tr>`;
-    }).join('');
-  }
-
-  function filterResults() {
-    const q          = document.getElementById('filterInput').value.toLowerCase();
-    const rankFilter = document.getElementById('filterRank').value;
-    const filtered   = allResults.filter(r => {
-      const matchKw = r.keyword.toLowerCase().includes(q);
-      let matchRank = true;
-      if (rankFilter === '1-3')       matchRank = r.rank !== null && r.rank <= 3;
-      else if (rankFilter === '1-10') matchRank = r.rank !== null && r.rank <= 10;
-      else if (rankFilter === '1-30') matchRank = r.rank !== null && r.rank <= 30;
-      else if (rankFilter === 'not-found') matchRank = r.rank === null;
-      return matchKw && matchRank;
-    });
-    buildTable(filtered);
-  }
-
-  function downloadCSV() {
-    if (!allResults.length) return;
-    const domain = document.getElementById('targetDomain').value.trim();
-    const modeLabel = selectedRankMode === 'organic' ? 'Organic Position' : 'Absolute Position';
-    const rows = [['Keyword', modeLabel, 'Ranking URL', 'Domain']];
-    allResults.forEach(r => {
-      rows.push([
-        `"${(r.keyword||'').replace(/"/g,'""')}"`,
-        r.rank !== null ? r.rank : 'Not Found',
-        `"${(r.url||'').replace(/"/g,'""')}"`,
-        domain
-      ]);
-    });
-    const csv = rows.map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
-    a.download = `rankings-${domain}-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  function clearAll() {
-    document.getElementById('keywords').value = '';
-    document.getElementById('targetDomain').value = '';
-    document.getElementById('filterInput').value = '';
-    document.getElementById('filterRank').value = 'all';
-    document.getElementById('resultsSection').style.display = 'none';
+    allResults=results.filter(Boolean);
+    renderResults(allResults,rawDomain,false);
+  }catch(err){
+    showError(err.message);
     document.getElementById('progressWrap').classList.remove('visible');
-    document.getElementById('kwCounter').textContent = '0 keywords';
-    document.getElementById('liveEst').textContent = '';
-    hideMessages();
-    allResults = [];
+  }finally{
+    btn.disabled=false; btn.classList.remove('loading');
+    document.getElementById('btnSpinner').style.display='none';
+    document.querySelector('.btn-icon').style.display='';
   }
+}
 
-  function viewSerp(idx) {
-    const r = allResults[idx];
-    if (!r || !r.serpItems) return;
-    document.getElementById('serpModalTitle').textContent = `SERP: "${r.keyword}"`;
-    const orgTotal = r.serpItems.filter(i => i.type === 'organic').length;
-    document.getElementById('serpModalMeta').textContent =
-      `${r.serpItems.length} total items · ${orgTotal} organic · target: ${document.getElementById('targetDomain').value.trim()} · mode: ${r.rankMode || selectedRankMode}`;
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function rankClass(rank){
+  if(rank===null)return 'rank-not-found';
+  if(rank<=3)return 'rank-1-3';
+  if(rank<=10)return 'rank-4-10';
+  if(rank<=30)return 'rank-11-30';
+  return 'rank-31-100';
+}
+function rankLabel(rank){return rank!==null?'#'+rank:'Not found';}
 
-    const target = document.getElementById('targetDomain').value.trim()
-      .replace(/^https?:\/\//i,'').replace(/^www\./i,'').split('/')[0].toLowerCase();
+function renderResults(results,domain,partial){
+  document.getElementById('resultsSection').style.display='block';
+  if(!partial)document.getElementById('progressWrap').classList.remove('visible');
+  const ranked=results.filter(r=>r.rank!==null).length;
+  const notFound=results.filter(r=>r.rank===null).length;
+  const modeLabel=selectedRankMode==='organic'?'organic pos.':'abs. pos.';
+  document.getElementById('resultsCount').innerHTML=
+    `<strong>${results.length.toLocaleString()}</strong> keywords checked for <strong>${domain}</strong> — `
+    +`<span class="pill pill-green">${ranked.toLocaleString()} ranked</span>`
+    +` &nbsp;<span style="color:var(--text-3)">${notFound.toLocaleString()} not found</span>`
+    +` &nbsp;<span style="color:var(--text-3);font-family:'DM Mono',monospace;font-size:11px;">(${modeLabel})</span>`;
 
-    const tbody = document.getElementById('serpModalBody');
-    tbody.innerHTML = r.serpItems.map(it => {
-      const itemHost = extractHost(it.url || '') || (it.domain || '').replace(/^www\./i,'').toLowerCase();
-      const isTarget = domainMatches(itemHost, target);
-      const isOrganic = it.type === 'organic';
-      const bg = isTarget ? 'background:#E8F5E9;' : '';
-      const domStyle = isTarget ? 'color:#2E7D32;font-weight:600;' : 'color:var(--text-2);';
-      const typeStyle = isOrganic ? 'color:var(--accent);font-weight:500;' : 'color:var(--text-3);';
-      return `<tr style="border-bottom:1px solid var(--border);${bg}">
-        <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-3);width:36px;">${it.rank_absolute ?? '—'}</td>
-        <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);width:36px;">${it.organic_position ?? '—'}</td>
-        <td style="padding:8px 14px;font-size:11px;white-space:nowrap;${typeStyle}">${it.type || '—'}</td>
-        <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;${domStyle}">${escHtml(it.domain||'—')}</td>
-        <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent-mid);max-width:280px;word-break:break-all;">${it.url ? `<a href="${escHtml(it.url)}" target="_blank" style="color:var(--accent-mid);text-decoration:none;">${truncate(it.url,60)}</a>` : '—'}</td>
-      </tr>`;
-    }).join('');
-    document.getElementById('serpModal').style.display = 'block';
+  const rankedRanks=results.filter(r=>r.rank!==null).map(r=>r.rank).sort((a,b)=>a-b);
+  const statRow=document.getElementById('avgStatRow');
+  if(rankedRanks.length){
+    const avg=(rankedRanks.reduce((s,v)=>s+v,0)/rankedRanks.length).toFixed(1);
+    const mid=Math.floor(rankedRanks.length/2);
+    const median=rankedRanks.length%2!==0?rankedRanks[mid]:((rankedRanks[mid-1]+rankedRanks[mid])/2).toFixed(1);
+    document.getElementById('avgRankVal').textContent=avg;
+    document.getElementById('medRankVal').textContent=median;
+    document.getElementById('top10Val').textContent=rankedRanks.filter(r=>r<=10).length;
+    statRow.style.display='flex';
+  }else{statRow.style.display='none';}
+
+  buildTable(results);
+  hideMessages();
+  if(!partial&&ranked===0)showInfo('No rankings found. Check your domain spelling and use the "View" button on any keyword to inspect the raw SERP. Try "Absolute SERP position" mode to see all item types.');
+}
+
+function buildTable(results){
+  const tbody=document.getElementById('resultsBody');
+  if(!results.length){
+    tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No results to display</p></div></td></tr>`;
+    return;
   }
+  tbody.innerHTML=results.map((r,i)=>{
+    const serpIdx=allResults.findIndex(a=>a.keyword===r.keyword);
+    return`<tr>
+      <td style="color:var(--text-3);font-family:'DM Mono',monospace;font-size:12px;width:40px">${i+1}</td>
+      <td class="keyword-cell">${escHtml(r.keyword)}</td>
+      <td><span class="rank-badge ${rankClass(r.rank)}">${rankLabel(r.rank)}</span></td>
+      <td class="url-cell">${r.url
+        ?`<a href="${escHtml(r.url)}" target="_blank" style="color:var(--accent-mid);text-decoration:none;" title="${escHtml(r.url)}">${truncate(r.url,60)}</a>`
+        :'<span style="color:var(--text-3)">—</span>'}</td>
+      <td><button onclick="viewSerp(${serpIdx>=0?serpIdx:i})" style="background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text-2);">View</button></td>
+    </tr>`;
+  }).join('');
+}
 
-  document.getElementById('serpModal').addEventListener('click', function(e) {
-    if (e.target === this) this.style.display = 'none';
+function filterResults(){
+  const q=document.getElementById('filterInput').value.toLowerCase();
+  const rf=document.getElementById('filterRank').value;
+  const filtered=allResults.filter(r=>{
+    const matchKw=r.keyword.toLowerCase().includes(q);
+    let matchRank=true;
+    if(rf==='1-3')matchRank=r.rank!==null&&r.rank<=3;
+    else if(rf==='1-10')matchRank=r.rank!==null&&r.rank<=10;
+    else if(rf==='1-30')matchRank=r.rank!==null&&r.rank<=30;
+    else if(rf==='not-found')matchRank=r.rank===null;
+    return matchKw&&matchRank;
   });
+  buildTable(filtered);
+}
 
-  function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function truncate(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+function viewSerp(idx){
+  const r=allResults[idx];
+  if(!r||!r.serpItems)return;
+  document.getElementById('serpModalTitle').textContent=`SERP: "${r.keyword}"`;
+  const orgTotal=r.serpItems.filter(i=>(i.type||'')==='organic').length;
+  document.getElementById('serpModalMeta').textContent=
+    `${r.serpItems.length} items · ${orgTotal} organic · mode: ${r.rankMode||selectedRankMode} · target: ${document.getElementById('targetDomain').value.trim()}`;
+
+  const tbody=document.getElementById('serpModalBody');
+  tbody.innerHTML=r.serpItems.map(it=>{
+    const isOrg=(it.type||'')==='organic';
+    const bg=it.hasTarget?'background:#E8F5E9;':'';
+    const domStyle=it.hasTarget?'color:#2E7D32;font-weight:600;':'color:var(--text-2);';
+    const typeStyle=isOrg?'color:var(--accent);font-weight:500;':it.hasTarget?'color:#2E7D32;':'color:var(--text-3);';
+    const matchBadge=it.hasTarget?'<span style="background:#2E7D32;color:#fff;font-size:9px;padding:2px 5px;border-radius:3px;margin-left:6px;font-family:DM Sans,sans-serif;">MATCH</span>':'';
+    return`<tr style="border-bottom:1px solid var(--border);${bg}">
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-3);width:36px;">${it.rank_absolute??'—'}</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);width:36px;">${it.organic_position??'—'}</td>
+      <td style="padding:8px 14px;font-size:11px;white-space:nowrap;${typeStyle}">${it.type||'—'}${matchBadge}</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;${domStyle}">${escHtml(it.domain||'—')}</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent-mid);max-width:280px;word-break:break-all;">${it.url?`<a href="${escHtml(it.url)}" target="_blank" style="color:var(--accent-mid);text-decoration:none;">${truncate(it.url,60)}</a>`:'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('serpModal').style.display='block';
+}
+
+document.getElementById('serpModal').addEventListener('click',function(e){if(e.target===this)this.style.display='none';});
+
+// ── DOWNLOAD ──────────────────────────────────────────────────────────────────
+function downloadCSV(){
+  if(!allResults.length)return;
+  const domain=document.getElementById('targetDomain').value.trim();
+  const modeLabel=selectedRankMode==='organic'?'Organic Position':'Absolute Position';
+  const rows=[['Keyword',modeLabel,'Ranking URL','Domain']];
+  allResults.forEach(r=>rows.push([
+    `"${(r.keyword||'').replace(/"/g,'""')}"`,
+    r.rank!==null?r.rank:'Not Found',
+    `"${(r.url||'').replace(/"/g,'""')}"`,
+    domain
+  ]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`rankings-${domain}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(url);
+}
+
+// ── MISC UI ───────────────────────────────────────────────────────────────────
+function getKeywords(){return[...new Set(document.getElementById('keywords').value.split('\n').map(k=>k.trim()).filter(Boolean))];}
+function updateKwCount(){const n=getKeywords().length;document.getElementById('kwCounter').textContent=`${n.toLocaleString()} keyword${n!==1?'s':''}`;document.getElementById('liveEst').textContent=n>0?`~$${(n*0.0006).toFixed(2)} estimated`:'`';}
+function filterLocations(){
+  const q=document.getElementById('locationSearch').value.toLowerCase().trim();
+  const sel=document.getElementById('locationCode');
+  const hint=document.getElementById('locationHint');
+  if(!q){Array.from(sel.options).forEach(o=>o.style.display='');Array.from(sel.querySelectorAll('optgroup')).forEach(g=>g.style.display='');hint.textContent='Country, state, or city';return;}
+  let firstMatch=null,matchCount=0;
+  Array.from(sel.querySelectorAll('optgroup')).forEach(group=>{
+    let has=false;
+    Array.from(group.options).forEach(opt=>{const m=opt.text.toLowerCase().includes(q);opt.style.display=m?'':'none';if(m){has=true;matchCount++;if(!firstMatch)firstMatch=opt;}});
+    group.style.display=has?'':'none';
+  });
+  if(firstMatch)sel.value=firstMatch.value;
+  hint.textContent=matchCount?`${matchCount} location${matchCount>1?'s':''} found`:'No matches';
+}
+function selectSE(btn){document.querySelectorAll('#seGroup .se-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedSE=btn.dataset.se;}
+function selectDevice(btn){document.querySelectorAll('#deviceGroup .se-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedDevice=btn.dataset.dev;}
+function selectRankMode(btn){
+  document.querySelectorAll('#rankModeGroup .se-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedRankMode=btn.dataset.mode;
+  document.getElementById('rankModeHint').textContent=selectedRankMode==='organic'
+    ?'Organic position = rank among blue-link results only (matches Ahrefs / Semrush)'
+    :'Absolute SERP position = raw position including ads, snippets, PAA, etc.';
+}
+function togglePw(){const el=document.getElementById('apiPassword');const icon=document.getElementById('eyeIcon');if(el.type==='password'){el.type='text';icon.innerHTML='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';}else{el.type='password';icon.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';}}
+function showError(msg){document.getElementById('errorMsg').textContent=msg;document.getElementById('errorBanner').className='status-banner error';document.getElementById('infoBanner').style.display='none';}
+function showInfo(msg){document.getElementById('infoMsg').textContent=msg;document.getElementById('infoBanner').className='status-banner info';document.getElementById('errorBanner').style.display='none';}
+function hideMessages(){document.getElementById('errorBanner').style.display='none';document.getElementById('infoBanner').style.display='none';}
+function setProgress(done,total){const pct=total?(done/total)*100:0;document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressLabel').textContent=`Checking ${done} / ${total} keywords…`;}
+function clearAll(){document.getElementById('keywords').value='';document.getElementById('targetDomain').value='';document.getElementById('filterInput').value='';document.getElementById('filterRank').value='all';document.getElementById('resultsSection').style.display='none';document.getElementById('progressWrap').classList.remove('visible');document.getElementById('kwCounter').textContent='0 keywords';document.getElementById('liveEst').textContent='';hideMessages();allResults=[];}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function truncate(s,n){return s.length>n?s.slice(0,n)+'…':s;}
 </script>
 </body>
 </html>
