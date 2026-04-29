@@ -118,6 +118,8 @@
   .avg-stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 20px;box-shadow:var(--shadow);}
   .avg-stat-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);}
   .avg-stat-lbl{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;line-height:1.4;}
+  .debug-panel{background:#1a1714;color:#a0d4a0;font-family:'DM Mono',monospace;font-size:11px;padding:12px 16px;border-radius:7px;margin-bottom:12px;display:none;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;}
+  .debug-panel.visible{display:block;}
 </style>
 </head>
 <body>
@@ -317,6 +319,7 @@
         <span class="btn-text">Check Rankings</span>
       </button>
       <button class="btn btn-outline btn-sm" onclick="clearAll()">Clear</button>
+      <button class="btn btn-outline btn-sm" onclick="toggleDebug()" id="debugBtn" style="opacity:0.5">Debug</button>
       <span id="liveEst" style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace;"></span>
     </div>
   </div>
@@ -329,6 +332,8 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span id="infoMsg"></span>
   </div>
+
+  <div class="debug-panel" id="debugPanel"></div>
 
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
@@ -412,117 +417,144 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!document.getEleme
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let selectedSE='google', selectedDevice='desktop', selectedRankMode='organic', allResults=[];
+let debugMode=false;
+const debugLog=[];
+
+function dbg(msg){
+  if(!debugMode)return;
+  const line=typeof msg==='object'?JSON.stringify(msg,null,2):String(msg);
+  debugLog.push(line);
+  const panel=document.getElementById('debugPanel');
+  panel.textContent=debugLog.slice(-200).join('\n');
+  panel.scrollTop=panel.scrollHeight;
+}
+
+function toggleDebug(){
+  debugMode=!debugMode;
+  debugLog.length=0;
+  const panel=document.getElementById('debugPanel');
+  panel.classList.toggle('visible',debugMode);
+  document.getElementById('debugBtn').style.opacity=debugMode?'1':'0.5';
+  if(debugMode)panel.textContent='Debug mode ON. Run a check to see raw matching info.\n';
+}
 
 // ── DOMAIN HELPERS ────────────────────────────────────────────────────────────
-// Strip protocol, www, trailing slash, path — return bare hostname
-function bareHost(s){
-  if(!s||typeof s!=='string')return '';
+// Normalise a hostname: lowercase, strip www., strip trailing dot
+function normaliseHost(h){
+  if(!h||typeof h!=='string')return '';
+  return h.toLowerCase().replace(/^www\./,'').replace(/\.$/,'').trim();
+}
+
+// Extract bare hostname from a full URL string (handles https://www.example.com/path?q=1)
+function hostFromUrl(url){
+  if(!url||typeof url!=='string')return '';
   try{
-    if(!/^https?:\/\//i.test(s))s='https://'+s;
-    return new URL(s).hostname.replace(/^www\./i,'').toLowerCase().trim();
+    if(!/^https?:\/\//i.test(url))url='https://'+url;
+    return normaliseHost(new URL(url).hostname);
   }catch(_){
-    return s.replace(/^https?:\/\//i,'').replace(/^www\./i,'').split('/')[0].split('?')[0].toLowerCase().trim();
+    // Fallback: strip protocol and path manually
+    return normaliseHost(url.replace(/^https?:\/\//i,'').split('/')[0].split('?')[0].split('#')[0]);
   }
 }
 
-// Does itemHost belong to targetHost?
-// Handles exact match, subdomains (blog.example.com → example.com)
-function hostBelongsTo(itemHost, targetHost){
-  if(!itemHost||!targetHost)return false;
-  if(itemHost===targetHost)return true;
-  if(itemHost.endsWith('.'+targetHost))return true;
-  return false;
+// Does candidateHost belong to targetHost?
+// Handles: exact match OR subdomain (blog.example.com → example.com)
+function hostMatches(candidateHost, targetHost){
+  if(!candidateHost||!targetHost)return false;
+  const c=normaliseHost(candidateHost);
+  const t=normaliseHost(targetHost);
+  if(!c||!t)return false;
+  return c===t || c.endsWith('.'+t);
 }
 
-// ── EXHAUSTIVE DOMAIN SEARCHER ────────────────────────────────────────────────
-// Recursively walks ANY object and collects every string value that looks like
-// a URL or domain, then tests against targetHost.
-// Returns the first matching string value found, or null.
-function findDomainInObject(obj, targetHost, _depth){
-  if(!obj||_depth>8)return null;
-  if(typeof obj==='string'){
-    if(obj.length<4||obj.length>500)return null;
-    const h=bareHost(obj);
-    if(h&&hostBelongsTo(h,targetHost))return obj;
-    return null;
+// ── PRIMARY MATCH CHECK ───────────────────────────────────────────────────────
+// DataForSEO organic items have a top-level `domain` field which is the most
+// reliable signal. We also check `url` as a fallback.
+// For non-organic types in absolute mode, we walk sub-items too.
+function itemMatchesTarget(item, targetHost){
+  // 1. Check top-level domain field (most reliable — DataForSEO always populates this for organic)
+  if(item.domain && hostMatches(item.domain, targetHost)){
+    dbg(`  MATCH via .domain: "${item.domain}"`);
+    return item.url || ('https://'+item.domain);
   }
-  if(Array.isArray(obj)){
-    for(const v of obj){
-      const r=findDomainInObject(v,targetHost,_depth+1);
-      if(r)return r;
+  // 2. Check top-level url field
+  if(item.url){
+    const h=hostFromUrl(item.url);
+    if(hostMatches(h, targetHost)){
+      dbg(`  MATCH via .url: "${item.url}"`);
+      return item.url;
     }
-    return null;
   }
-  if(typeof obj==='object'){
-    // Prioritise known URL/domain fields first for speed and accuracy
-    const priorityKeys=['url','domain','breadcrumb','source_url','canonical_url','website','href','link','page_url','relative_url','amp_version_url'];
-    for(const k of priorityKeys){
-      if(obj[k]){
-        const r=findDomainInObject(obj[k],targetHost,_depth+1);
-        if(r)return r;
+  // 3. Check sub-items (sitelinks, nested results) — DataForSEO sometimes
+  //    puts additional results inside items[].items[]
+  if(Array.isArray(item.items)){
+    for(const sub of item.items){
+      const subMatch=itemMatchesTarget(sub, targetHost);
+      if(subMatch){
+        dbg(`  MATCH via sub-item: "${subMatch}"`);
+        return subMatch;
       }
     }
-    // Then walk all other keys
-    for(const k of Object.keys(obj)){
-      if(priorityKeys.includes(k))continue;
-      const r=findDomainInObject(obj[k],targetHost,_depth+1);
-      if(r)return r;
+  }
+  // 4. Breadcrumb domain check (some result types expose domain only via breadcrumb)
+  if(item.breadcrumb){
+    const h=hostFromUrl(item.breadcrumb);
+    if(hostMatches(h, targetHost)){
+      dbg(`  MATCH via .breadcrumb: "${item.breadcrumb}"`);
+      return item.url||item.breadcrumb;
     }
   }
   return null;
 }
 
 // ── CORE SERP PARSER ──────────────────────────────────────────────────────────
-//
-// The only reliable approach: iterate top-level items in rank_absolute order,
-// maintain an organic counter (type==='organic' only), and for EACH item do a
-// deep recursive search of the entire item object for the target domain.
-//
-// This catches:
-//   ✓ Organic results (normal)
-//   ✓ Results only visible in sitelinks / sub-items (nested 3+ levels)
-//   ✓ Featured snippets owned by target (reported as organic rank 1 equiv)
-//   ✓ Breadcrumb-only domain presence
-//   ✓ Any DataForSEO field we don't know about yet
-//
-// Cost: unchanged — same single API call per keyword.
-// ─────────────────────────────────────────────────────────────────────────────
 function parseSerp(items, targetHost, mode){
   if(!items||!items.length)return null;
 
-  // Sort strictly by rank_absolute ascending
+  // Sort by rank_absolute ascending (nulls last)
   const sorted=[...items].sort((a,b)=>(a.rank_absolute??99999)-(b.rank_absolute??99999));
+
+  dbg(`\n--- parseSerp: ${sorted.length} items, target="${targetHost}", mode="${mode}" ---`);
 
   let organicCounter=0;
 
   for(const item of sorted){
     const type=(item.type||'').toLowerCase().trim();
     const isOrg=(type==='organic');
-    const isFeaturedSnippet=(type==='featured_snippet');
+    const isFeatured=(type==='featured_snippet');
 
-    if(isOrg)organicCounter++;
+    if(isOrg) organicCounter++;
+
+    dbg(`  [abs=${item.rank_absolute}] type="${type}" org#=${isOrg?organicCounter:'—'} domain="${item.domain||''}" url="${(item.url||'').slice(0,60)}"`);
 
     if(mode==='organic'){
-      // In organic mode, only yield a rank for type=organic items.
-      // Also catch featured_snippet owned by target (= organic #1 equivalent).
       if(isOrg){
-        const match=findDomainInObject(item,targetHost,0);
-        if(match)return{rank:organicCounter, url:item.url||match};
-      } else if(isFeaturedSnippet){
-        // Featured snippets sit above organic results. If our domain owns it,
-        // report as rank 1 (same as Ahrefs, Semrush behaviour).
-        const match=findDomainInObject(item,targetHost,0);
-        if(match)return{rank:1, url:item.url||match};
+        const matchUrl=itemMatchesTarget(item, targetHost);
+        if(matchUrl){
+          dbg(`  → FOUND organic rank=${organicCounter}`);
+          return{rank:organicCounter, url:item.url||matchUrl};
+        }
+      } else if(isFeatured){
+        // Featured snippet: if owned by target, treat as organic rank 1 equivalent
+        // (same behaviour as Ahrefs/Semrush)
+        const matchUrl=itemMatchesTarget(item, targetHost);
+        if(matchUrl){
+          dbg(`  → FOUND via featured_snippet (rank=1 equiv)`);
+          return{rank:1, url:item.url||matchUrl};
+        }
       }
-      // All other non-organic types (ads, PAA, local pack, video, images,
-      // knowledge panel, etc.) are skipped in organic mode.
+      // All other types (ads, PAA, local pack, video carousel, etc.) → skip in organic mode
     } else {
-      // Absolute mode: search every item type, return rank_absolute
-      const match=findDomainInObject(item,targetHost,0);
-      if(match)return{rank:item.rank_absolute, url:item.url||match};
+      // Absolute mode: check all item types
+      const matchUrl=itemMatchesTarget(item, targetHost);
+      if(matchUrl){
+        dbg(`  → FOUND absolute rank=${item.rank_absolute}`);
+        return{rank:item.rank_absolute, url:item.url||matchUrl};
+      }
     }
   }
 
+  dbg(`  → NOT FOUND in ${sorted.length} items`);
   return null;
 }
 
@@ -546,21 +578,39 @@ async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDom
     });
     data=await resp.json();
   }catch(e){
+    dbg(`NETWORK ERROR for "${kw}": ${e.message}`);
     return{keyword:kw,rank:null,url:null,error:'Network error: '+e.message,serpItems:[],organicCount:0};
   }
 
-  if(data.status_code&&data.status_code!==20000)
+  if(data.status_code&&data.status_code!==20000){
+    dbg(`API ERROR ${data.status_code}: ${data.status_message}`);
     return{keyword:kw,rank:null,url:null,error:`API ${data.status_code}: ${data.status_message}`,serpItems:[],organicCount:0};
+  }
 
   const task=(data.tasks||[])[0];
-  if(!task||task.status_code!==20000)
+  if(!task||task.status_code!==20000){
+    dbg(`TASK ERROR: ${task?.status_message}`);
     return{keyword:kw,rank:null,url:null,error:task?.status_message||'Task error',serpItems:[],organicCount:0};
+  }
 
   const items=task.result?.[0]?.items||[];
+  dbg(`\nKeyword: "${kw}" — ${items.length} SERP items returned`);
+
+  // Log the first few items in debug mode so user can see what domain fields look like
+  if(debugMode && items.length){
+    const sample=items.slice(0,5);
+    sample.forEach(it=>{
+      dbg(`  [abs=${it.rank_absolute}] type="${it.type}" domain="${it.domain||'(none)'}" url="${(it.url||'').slice(0,80)}"`);
+    });
+    if(items.length>5) dbg(`  ... and ${items.length-5} more items`);
+  }
+
   const organicCount=items.filter(i=>(i.type||'')==='organic').length;
+  dbg(`  Organic count: ${organicCount}, target host: "${targetHost}"`);
+
   const found=parseSerp(items, targetHost, selectedRankMode);
 
-  // Build SERP display (top-level items only, for the modal)
+  // Build SERP modal data
   let orgIdx=0;
   const serpItems=[...items]
     .sort((a,b)=>(a.rank_absolute??99999)-(b.rank_absolute??99999))
@@ -568,11 +618,12 @@ async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDom
       const t=(it.type||'').toLowerCase();
       if(t==='organic')orgIdx++;
       return{
-        type:it.type, rank_absolute:it.rank_absolute,
+        type:it.type,
+        rank_absolute:it.rank_absolute,
         organic_position:t==='organic'?orgIdx:null,
-        domain:it.domain, url:it.url,
-        // Flag if this item contains our target domain anywhere
-        hasTarget:!!findDomainInObject(it,targetHost,0),
+        domain:it.domain,
+        url:it.url,
+        hasTarget:!!itemMatchesTarget(it, targetHost),
       };
     });
 
@@ -581,16 +632,22 @@ async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDom
     rank:found?found.rank:null,
     url:found?found.url:null,
     rankMode:selectedRankMode,
-    error:null, serpItems, organicCount,
+    error:null,
+    serpItems,
+    organicCount,
   };
 }
 
 // ── RUN ───────────────────────────────────────────────────────────────────────
 async function runCheck(){
   hideMessages();
+  debugLog.length=0;
+  if(debugMode) document.getElementById('debugPanel').textContent='';
+
   const login=document.getElementById('apiLogin').value.trim();
   const password=document.getElementById('apiPassword').value.trim();
-  const rawDomain=document.getElementById('targetDomain').value.trim().replace(/^https?:\/\//i,'').replace(/\/$/,'');
+  const rawDomain=document.getElementById('targetDomain').value.trim()
+    .replace(/^https?:\/\//i,'').replace(/\/$/,'').replace(/^www\./i,'');
   const keywords=getKeywords();
 
   if(!login||!password){showError('Please enter your DataForSEO API Login and Password.');return;}
@@ -602,7 +659,11 @@ async function runCheck(){
   const locationCodeInt=parseInt(parts[0]);
   const languageCode=parts[1];
   const seDomain=parts[2];
-  const targetHost=bareHost(rawDomain);
+  const targetHost=normaliseHost(rawDomain);
+
+  dbg(`Target host (normalised): "${targetHost}"`);
+  dbg(`Mode: ${selectedRankMode}, SE: ${selectedSE}, Device: ${selectedDevice}`);
+  dbg(`Location: ${locationCodeInt}, Lang: ${languageCode}, Domain: ${seDomain}`);
 
   const btn=document.getElementById('checkBtn');
   btn.disabled=true; btn.classList.add('loading');
@@ -677,7 +738,9 @@ function renderResults(results,domain,partial){
 
   buildTable(results);
   hideMessages();
-  if(!partial&&ranked===0)showInfo('No rankings found. Check your domain spelling and use the "View" button on any keyword to inspect the raw SERP. Try "Absolute SERP position" mode to see all item types.');
+  if(!partial&&ranked===0){
+    showInfo('No rankings found. Tips: (1) Click "View" on any keyword to inspect raw SERP items and their domain fields. (2) Try "Absolute SERP position" mode to see all item types. (3) Enable Debug mode and re-run to see detailed matching logs.');
+  }
 }
 
 function buildTable(results){
@@ -793,7 +856,7 @@ function showError(msg){document.getElementById('errorMsg').textContent=msg;docu
 function showInfo(msg){document.getElementById('infoMsg').textContent=msg;document.getElementById('infoBanner').className='status-banner info';document.getElementById('errorBanner').style.display='none';}
 function hideMessages(){document.getElementById('errorBanner').style.display='none';document.getElementById('infoBanner').style.display='none';}
 function setProgress(done,total){const pct=total?(done/total)*100:0;document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressLabel').textContent=`Checking ${done} / ${total} keywords…`;}
-function clearAll(){document.getElementById('keywords').value='';document.getElementById('targetDomain').value='';document.getElementById('filterInput').value='';document.getElementById('filterRank').value='all';document.getElementById('resultsSection').style.display='none';document.getElementById('progressWrap').classList.remove('visible');document.getElementById('kwCounter').textContent='0 keywords';document.getElementById('liveEst').textContent='';hideMessages();allResults=[];}
+function clearAll(){document.getElementById('keywords').value='';document.getElementById('targetDomain').value='';document.getElementById('filterInput').value='';document.getElementById('filterRank').value='all';document.getElementById('resultsSection').style.display='none';document.getElementById('progressWrap').classList.remove('visible');document.getElementById('kwCounter').textContent='0 keywords';document.getElementById('liveEst').textContent='';hideMessages();allResults=[];debugLog.length=0;}
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function truncate(s,n){return s.length>n?s.slice(0,n)+'…':s;}
 </script>
