@@ -416,7 +416,10 @@ function _ck(){
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!document.getElementById('_ag').classList.contains('_gone'))_ck();});
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let selectedSE='google', selectedDevice='desktop', selectedRankMode='organic', allResults=[];
+let selectedSE='google', selectedDevice='desktop', selectedRankMode='organic';
+// FIX: allResults and currentRunId are managed carefully so stale data never bleeds through
+let allResults=[];
+let currentRunId=0; // incremented each run; any async callback with a stale id is dropped
 let debugMode=false;
 const debugLog=[];
 
@@ -439,26 +442,21 @@ function toggleDebug(){
 }
 
 // ── DOMAIN HELPERS ────────────────────────────────────────────────────────────
-// Normalise a hostname: lowercase, strip www., strip trailing dot
 function normaliseHost(h){
   if(!h||typeof h!=='string')return '';
   return h.toLowerCase().replace(/^www\./,'').replace(/\.$/,'').trim();
 }
 
-// Extract bare hostname from a full URL string (handles https://www.example.com/path?q=1)
 function hostFromUrl(url){
   if(!url||typeof url!=='string')return '';
   try{
     if(!/^https?:\/\//i.test(url))url='https://'+url;
     return normaliseHost(new URL(url).hostname);
   }catch(_){
-    // Fallback: strip protocol and path manually
     return normaliseHost(url.replace(/^https?:\/\//i,'').split('/')[0].split('?')[0].split('#')[0]);
   }
 }
 
-// Does candidateHost belong to targetHost?
-// Handles: exact match OR subdomain (blog.example.com → example.com)
 function hostMatches(candidateHost, targetHost){
   if(!candidateHost||!targetHost)return false;
   const c=normaliseHost(candidateHost);
@@ -468,16 +466,11 @@ function hostMatches(candidateHost, targetHost){
 }
 
 // ── PRIMARY MATCH CHECK ───────────────────────────────────────────────────────
-// DataForSEO organic items have a top-level `domain` field which is the most
-// reliable signal. We also check `url` as a fallback.
-// For non-organic types in absolute mode, we walk sub-items too.
 function itemMatchesTarget(item, targetHost){
-  // 1. Check top-level domain field (most reliable — DataForSEO always populates this for organic)
   if(item.domain && hostMatches(item.domain, targetHost)){
     dbg(`  MATCH via .domain: "${item.domain}"`);
     return item.url || ('https://'+item.domain);
   }
-  // 2. Check top-level url field
   if(item.url){
     const h=hostFromUrl(item.url);
     if(hostMatches(h, targetHost)){
@@ -485,8 +478,6 @@ function itemMatchesTarget(item, targetHost){
       return item.url;
     }
   }
-  // 3. Check sub-items (sitelinks, nested results) — DataForSEO sometimes
-  //    puts additional results inside items[].items[]
   if(Array.isArray(item.items)){
     for(const sub of item.items){
       const subMatch=itemMatchesTarget(sub, targetHost);
@@ -496,7 +487,6 @@ function itemMatchesTarget(item, targetHost){
       }
     }
   }
-  // 4. Breadcrumb domain check (some result types expose domain only via breadcrumb)
   if(item.breadcrumb){
     const h=hostFromUrl(item.breadcrumb);
     if(hostMatches(h, targetHost)){
@@ -510,23 +500,15 @@ function itemMatchesTarget(item, targetHost){
 // ── CORE SERP PARSER ──────────────────────────────────────────────────────────
 function parseSerp(items, targetHost, mode){
   if(!items||!items.length)return null;
-
-  // Sort by rank_absolute ascending (nulls last)
   const sorted=[...items].sort((a,b)=>(a.rank_absolute??99999)-(b.rank_absolute??99999));
-
   dbg(`\n--- parseSerp: ${sorted.length} items, target="${targetHost}", mode="${mode}" ---`);
-
   let organicCounter=0;
-
   for(const item of sorted){
     const type=(item.type||'').toLowerCase().trim();
     const isOrg=(type==='organic');
     const isFeatured=(type==='featured_snippet');
-
     if(isOrg) organicCounter++;
-
     dbg(`  [abs=${item.rank_absolute}] type="${type}" org#=${isOrg?organicCounter:'—'} domain="${item.domain||''}" url="${(item.url||'').slice(0,60)}"`);
-
     if(mode==='organic'){
       if(isOrg){
         const matchUrl=itemMatchesTarget(item, targetHost);
@@ -535,17 +517,13 @@ function parseSerp(items, targetHost, mode){
           return{rank:organicCounter, url:item.url||matchUrl};
         }
       } else if(isFeatured){
-        // Featured snippet: if owned by target, treat as organic rank 1 equivalent
-        // (same behaviour as Ahrefs/Semrush)
         const matchUrl=itemMatchesTarget(item, targetHost);
         if(matchUrl){
           dbg(`  → FOUND via featured_snippet (rank=1 equiv)`);
           return{rank:1, url:item.url||matchUrl};
         }
       }
-      // All other types (ads, PAA, local pack, video carousel, etc.) → skip in organic mode
     } else {
-      // Absolute mode: check all item types
       const matchUrl=itemMatchesTarget(item, targetHost);
       if(matchUrl){
         dbg(`  → FOUND absolute rank=${item.rank_absolute}`);
@@ -553,7 +531,6 @@ function parseSerp(items, targetHost, mode){
       }
     }
   }
-
   dbg(`  → NOT FOUND in ${sorted.length} items`);
   return null;
 }
@@ -593,10 +570,13 @@ async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDom
     return{keyword:kw,rank:null,url:null,error:task?.status_message||'Task error',serpItems:[],organicCount:0};
   }
 
-  const items=task.result?.[0]?.items||[];
-  dbg(`\nKeyword: "${kw}" — ${items.length} SERP items returned`);
+  // FIX: use task.data.keyword if available (DataForSEO may normalise the kw),
+  // fall back to what we sent so the keyword column is never blank
+  const canonicalKw = (task.data && task.data.keyword) ? task.data.keyword : kw;
 
-  // Log the first few items in debug mode so user can see what domain fields look like
+  const items=task.result?.[0]?.items||[];
+  dbg(`\nKeyword: "${canonicalKw}" — ${items.length} SERP items returned`);
+
   if(debugMode && items.length){
     const sample=items.slice(0,5);
     sample.forEach(it=>{
@@ -610,7 +590,8 @@ async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDom
 
   const found=parseSerp(items, targetHost, selectedRankMode);
 
-  // Build SERP modal data
+  // Build SERP modal data — snapshot the mode at call-time, not at render-time
+  const capturedMode=selectedRankMode;
   let orgIdx=0;
   const serpItems=[...items]
     .sort((a,b)=>(a.rank_absolute??99999)-(b.rank_absolute??99999))
@@ -628,11 +609,11 @@ async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDom
     });
 
   return{
-    keyword:task.data?.keyword||kw,
-    rank:found?found.rank:null,
-    url:found?found.url:null,
-    rankMode:selectedRankMode,
-    error:null,
+    keyword: canonicalKw,
+    rank: found?found.rank:null,
+    url: found?found.url:null,
+    rankMode: capturedMode,
+    error: null,
     serpItems,
     organicCount,
   };
@@ -640,9 +621,14 @@ async function fetchKeyword(kw, authHeader, locationCodeInt, languageCode, seDom
 
 // ── RUN ───────────────────────────────────────────────────────────────────────
 async function runCheck(){
+  // FIX 1: Immediately clear allResults so old data cannot bleed into the new run
+  allResults=[];
   hideMessages();
   debugLog.length=0;
   if(debugMode) document.getElementById('debugPanel').textContent='';
+
+  // FIX 2: Stamp this run so any callbacks from a previous (cancelled) run are dropped
+  const myRunId=++currentRunId;
 
   const login=document.getElementById('apiLogin').value.trim();
   const password=document.getElementById('apiPassword').value.trim();
@@ -670,36 +656,64 @@ async function runCheck(){
   document.getElementById('btnSpinner').style.display='block';
   document.querySelector('.btn-icon').style.display='none';
   document.getElementById('progressWrap').classList.add('visible');
+  // FIX 3: Hide results section immediately at run start so stale table is never visible
   document.getElementById('resultsSection').style.display='none';
-  allResults=[]; setProgress(0,keywords.length);
+  document.getElementById('resultsBody').innerHTML='';
+  setProgress(0,keywords.length);
 
-  const authHeader='Basic '+btoa(login+':'+password);
-  const CONCURRENCY=5;
-  const results=new Array(keywords.length).fill(null);
+  // FIX 4: Use a pre-allocated array indexed by position so results are always
+  // in the same order as the input keywords, even when chunks finish out of order
+  const results=new Array(keywords.length);
   let completed=0;
+  const CONCURRENCY=5;
 
   try{
     for(let i=0;i<keywords.length;i+=CONCURRENCY){
+      // FIX 5: Abort mid-run if a newer run has been started
+      if(currentRunId!==myRunId) return;
+
       const chunk=keywords.slice(i,i+CONCURRENCY);
       const chunkRes=await Promise.all(
-        chunk.map(kw=>fetchKeyword(kw,authHeader,locationCodeInt,languageCode,seDomain,targetHost))
+        chunk.map(kw=>fetchKeyword(kw,authHeader(login,password),locationCodeInt,languageCode,seDomain,targetHost))
       );
-      chunkRes.forEach((r,j)=>{results[i+j]=r;});
+
+      // Guard again after await
+      if(currentRunId!==myRunId) return;
+
+      chunkRes.forEach((r,j)=>{ results[i+j]=r; });
       completed+=chunk.length;
       setProgress(completed,keywords.length);
-      const partial=results.filter(Boolean);
-      if(partial.length){allResults=partial;renderResults(partial,rawDomain,true);}
+
+      // FIX 6: Only show results that are fully fetched (no undefined slots).
+      // Filter undefined (not-yet-fetched) but keep objects where rank===null (not found = valid result)
+      const partial=results.filter(r=>r!==undefined);
+      allResults=partial;
+      if(partial.length) renderResults(partial, rawDomain, true);
     }
-    allResults=results.filter(Boolean);
-    renderResults(allResults,rawDomain,false);
+
+    if(currentRunId!==myRunId) return;
+
+    // Final render with all results guaranteed to be complete
+    allResults=results.filter(r=>r!==undefined);
+    renderResults(allResults, rawDomain, false);
+
   }catch(err){
-    showError(err.message);
-    document.getElementById('progressWrap').classList.remove('visible');
+    if(currentRunId===myRunId){
+      showError(err.message);
+      document.getElementById('progressWrap').classList.remove('visible');
+    }
   }finally{
-    btn.disabled=false; btn.classList.remove('loading');
-    document.getElementById('btnSpinner').style.display='none';
-    document.querySelector('.btn-icon').style.display='';
+    if(currentRunId===myRunId){
+      btn.disabled=false; btn.classList.remove('loading');
+      document.getElementById('btnSpinner').style.display='none';
+      document.querySelector('.btn-icon').style.display='';
+    }
   }
+}
+
+// FIX 7: Extracted as a pure function so it can't accidentally capture stale closure vars
+function authHeader(login, password){
+  return 'Basic '+btoa(login+':'+password);
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -712,12 +726,15 @@ function rankClass(rank){
 }
 function rankLabel(rank){return rank!==null?'#'+rank:'Not found';}
 
-function renderResults(results,domain,partial){
+function renderResults(results, domain, partial){
   document.getElementById('resultsSection').style.display='block';
-  if(!partial)document.getElementById('progressWrap').classList.remove('visible');
+  if(!partial) document.getElementById('progressWrap').classList.remove('visible');
+
   const ranked=results.filter(r=>r.rank!==null).length;
   const notFound=results.filter(r=>r.rank===null).length;
-  const modeLabel=selectedRankMode==='organic'?'organic pos.':'abs. pos.';
+  // Use the mode that was active when this batch was fetched (from first result)
+  const modeLabel=(results[0]&&results[0].rankMode==='absolute')?'abs. pos.':'organic pos.';
+
   document.getElementById('resultsCount').innerHTML=
     `<strong>${results.length.toLocaleString()}</strong> keywords checked for <strong>${domain}</strong> — `
     +`<span class="pill pill-green">${ranked.toLocaleString()} ranked</span>`
@@ -729,20 +746,32 @@ function renderResults(results,domain,partial){
   if(rankedRanks.length){
     const avg=(rankedRanks.reduce((s,v)=>s+v,0)/rankedRanks.length).toFixed(1);
     const mid=Math.floor(rankedRanks.length/2);
-    const median=rankedRanks.length%2!==0?rankedRanks[mid]:((rankedRanks[mid-1]+rankedRanks[mid])/2).toFixed(1);
+    const median=rankedRanks.length%2!==0
+      ? rankedRanks[mid]
+      : ((rankedRanks[mid-1]+rankedRanks[mid])/2).toFixed(1);
     document.getElementById('avgRankVal').textContent=avg;
     document.getElementById('medRankVal').textContent=median;
     document.getElementById('top10Val').textContent=rankedRanks.filter(r=>r<=10).length;
     statRow.style.display='flex';
-  }else{statRow.style.display='none';}
+  }else{
+    statRow.style.display='none';
+  }
+
+  // Reset filter controls so stale filter from previous run doesn't hide new results
+  if(!partial){
+    document.getElementById('filterInput').value='';
+    document.getElementById('filterRank').value='all';
+  }
 
   buildTable(results);
   hideMessages();
-  if(!partial&&ranked===0){
+  if(!partial && ranked===0){
     showInfo('No rankings found. Tips: (1) Click "View" on any keyword to inspect raw SERP items and their domain fields. (2) Try "Absolute SERP position" mode to see all item types. (3) Enable Debug mode and re-run to see detailed matching logs.');
   }
 }
 
+// FIX 8: buildTable now stores the allResults index on the button via data-idx
+// so viewSerp always opens the right SERP regardless of filter state
 function buildTable(results){
   const tbody=document.getElementById('resultsBody');
   if(!results.length){
@@ -750,7 +779,9 @@ function buildTable(results){
     return;
   }
   tbody.innerHTML=results.map((r,i)=>{
-    const serpIdx=allResults.findIndex(a=>a.keyword===r.keyword);
+    // Find the real index in allResults by keyword so the SERP modal always gets the right entry
+    const globalIdx=allResults.findIndex(a=>a.keyword===r.keyword);
+    const serpIdx=globalIdx>=0?globalIdx:i;
     return`<tr>
       <td style="color:var(--text-3);font-family:'DM Mono',monospace;font-size:12px;width:40px">${i+1}</td>
       <td class="keyword-cell">${escHtml(r.keyword)}</td>
@@ -758,7 +789,7 @@ function buildTable(results){
       <td class="url-cell">${r.url
         ?`<a href="${escHtml(r.url)}" target="_blank" style="color:var(--accent-mid);text-decoration:none;" title="${escHtml(r.url)}">${truncate(r.url,60)}</a>`
         :'<span style="color:var(--text-3)">—</span>'}</td>
-      <td><button onclick="viewSerp(${serpIdx>=0?serpIdx:i})" style="background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text-2);">View</button></td>
+      <td><button data-idx="${serpIdx}" onclick="viewSerp(this.dataset.idx|0)" style="background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text-2);">View</button></td>
     </tr>`;
   }).join('');
 }
@@ -827,36 +858,89 @@ function downloadCSV(){
 }
 
 // ── MISC UI ───────────────────────────────────────────────────────────────────
-function getKeywords(){return[...new Set(document.getElementById('keywords').value.split('\n').map(k=>k.trim()).filter(Boolean))];}
-function updateKwCount(){const n=getKeywords().length;document.getElementById('kwCounter').textContent=`${n.toLocaleString()} keyword${n!==1?'s':''}`;document.getElementById('liveEst').textContent=n>0?`~$${(n*0.0006).toFixed(2)} estimated`:'`';}
+function getKeywords(){
+  return[...new Set(
+    document.getElementById('keywords').value
+      .split('\n').map(k=>k.trim()).filter(Boolean)
+  )];
+}
+
+// FIX 9: Was ending with a stray backtick: `'`
+function updateKwCount(){
+  const n=getKeywords().length;
+  document.getElementById('kwCounter').textContent=`${n.toLocaleString()} keyword${n!==1?'s':''}`;
+  document.getElementById('liveEst').textContent=n>0?`~$${(n*0.0006).toFixed(2)} estimated`:'';
+}
+
 function filterLocations(){
   const q=document.getElementById('locationSearch').value.toLowerCase().trim();
   const sel=document.getElementById('locationCode');
   const hint=document.getElementById('locationHint');
-  if(!q){Array.from(sel.options).forEach(o=>o.style.display='');Array.from(sel.querySelectorAll('optgroup')).forEach(g=>g.style.display='');hint.textContent='Country, state, or city';return;}
+  if(!q){
+    Array.from(sel.options).forEach(o=>o.style.display='');
+    Array.from(sel.querySelectorAll('optgroup')).forEach(g=>g.style.display='');
+    hint.textContent='Country, state, or city';
+    return;
+  }
   let firstMatch=null,matchCount=0;
   Array.from(sel.querySelectorAll('optgroup')).forEach(group=>{
     let has=false;
-    Array.from(group.options).forEach(opt=>{const m=opt.text.toLowerCase().includes(q);opt.style.display=m?'':'none';if(m){has=true;matchCount++;if(!firstMatch)firstMatch=opt;}});
+    Array.from(group.options).forEach(opt=>{
+      const m=opt.text.toLowerCase().includes(q);
+      opt.style.display=m?'':'none';
+      if(m){has=true;matchCount++;if(!firstMatch)firstMatch=opt;}
+    });
     group.style.display=has?'':'none';
   });
   if(firstMatch)sel.value=firstMatch.value;
   hint.textContent=matchCount?`${matchCount} location${matchCount>1?'s':''} found`:'No matches';
 }
+
 function selectSE(btn){document.querySelectorAll('#seGroup .se-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedSE=btn.dataset.se;}
 function selectDevice(btn){document.querySelectorAll('#deviceGroup .se-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedDevice=btn.dataset.dev;}
 function selectRankMode(btn){
-  document.querySelectorAll('#rankModeGroup .se-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedRankMode=btn.dataset.mode;
+  document.querySelectorAll('#rankModeGroup .se-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedRankMode=btn.dataset.mode;
   document.getElementById('rankModeHint').textContent=selectedRankMode==='organic'
     ?'Organic position = rank among blue-link results only (matches Ahrefs / Semrush)'
     :'Absolute SERP position = raw position including ads, snippets, PAA, etc.';
 }
-function togglePw(){const el=document.getElementById('apiPassword');const icon=document.getElementById('eyeIcon');if(el.type==='password'){el.type='text';icon.innerHTML='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';}else{el.type='password';icon.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';}}
+function togglePw(){
+  const el=document.getElementById('apiPassword');
+  const icon=document.getElementById('eyeIcon');
+  if(el.type==='password'){
+    el.type='text';
+    icon.innerHTML='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  }else{
+    el.type='password';
+    icon.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
 function showError(msg){document.getElementById('errorMsg').textContent=msg;document.getElementById('errorBanner').className='status-banner error';document.getElementById('infoBanner').style.display='none';}
 function showInfo(msg){document.getElementById('infoMsg').textContent=msg;document.getElementById('infoBanner').className='status-banner info';document.getElementById('errorBanner').style.display='none';}
 function hideMessages(){document.getElementById('errorBanner').style.display='none';document.getElementById('infoBanner').style.display='none';}
-function setProgress(done,total){const pct=total?(done/total)*100:0;document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressLabel').textContent=`Checking ${done} / ${total} keywords…`;}
-function clearAll(){document.getElementById('keywords').value='';document.getElementById('targetDomain').value='';document.getElementById('filterInput').value='';document.getElementById('filterRank').value='all';document.getElementById('resultsSection').style.display='none';document.getElementById('progressWrap').classList.remove('visible');document.getElementById('kwCounter').textContent='0 keywords';document.getElementById('liveEst').textContent='';hideMessages();allResults=[];debugLog.length=0;}
+function setProgress(done,total){
+  const pct=total?(done/total)*100:0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=`Checking ${done} / ${total} keywords…`;
+}
+function clearAll(){
+  // FIX 10: Increment runId so any in-flight requests for the cleared run are dropped
+  currentRunId++;
+  allResults=[];
+  debugLog.length=0;
+  document.getElementById('keywords').value='';
+  document.getElementById('targetDomain').value='';
+  document.getElementById('filterInput').value='';
+  document.getElementById('filterRank').value='all';
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('resultsBody').innerHTML='';
+  document.getElementById('progressWrap').classList.remove('visible');
+  document.getElementById('kwCounter').textContent='0 keywords';
+  document.getElementById('liveEst').textContent='';
+  hideMessages();
+}
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function truncate(s,n){return s.length>n?s.slice(0,n)+'…':s;}
 </script>
